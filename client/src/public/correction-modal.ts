@@ -44,6 +44,7 @@ export function openCorrectionIntake(
   target: CorrectionTarget
 ): void {
   const document = runtime.root.ownerDocument;
+  const previouslyFocused = document.activeElement as HTMLElement | null;
   const previous = runtime.root.querySelector(".cm-correction-backdrop");
   previous?.remove();
 
@@ -52,6 +53,7 @@ export function openCorrectionIntake(
   dialog.setAttribute("role", "dialog");
   dialog.setAttribute("aria-modal", "true");
   dialog.setAttribute("aria-labelledby", "cm-correction-title");
+  dialog.tabIndex = -1;
 
   const title = create(document, "h2");
   title.id = "cm-correction-title";
@@ -138,13 +140,57 @@ export function openCorrectionIntake(
   backdrop.append(dialog);
   runtime.root.append(backdrop);
 
-  const close = () => backdrop.remove();
+  const close = () => {
+    backdrop.remove();
+    if (
+      previouslyFocused?.isConnected &&
+      typeof previouslyFocused.focus === "function"
+    )
+      previouslyFocused.focus();
+  };
   cancel.addEventListener("click", close);
   backdrop.addEventListener("click", event => {
     if (event.target === backdrop) close();
   });
   dialog.addEventListener("keydown", event => {
-    if (event.key === "Escape") close();
+    if (event.key === "Escape") {
+      event.preventDefault();
+      close();
+      return;
+    }
+    if (event.key !== "Tab") return;
+    // Resolve each time: submit/cancel are disabled while sending, and the
+    // successful receipt replaces the form with a single close button.
+    const focusable = Array.from(
+      dialog.querySelectorAll<HTMLElement>(
+        "a[href], button, input, select, textarea, [tabindex]"
+      )
+    ).filter(
+      node =>
+        node.tabIndex >= 0 &&
+        !node.matches(":disabled") &&
+        !node.closest("[hidden]")
+    );
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (!first || !last) {
+      event.preventDefault();
+      dialog.focus();
+    } else if (
+      event.shiftKey &&
+      (document.activeElement === first ||
+        !dialog.contains(document.activeElement))
+    ) {
+      event.preventDefault();
+      last.focus();
+    } else if (
+      !event.shiftKey &&
+      (document.activeElement === last ||
+        !dialog.contains(document.activeElement))
+    ) {
+      event.preventDefault();
+      first.focus();
+    }
   });
 
   form.addEventListener("submit", async event => {

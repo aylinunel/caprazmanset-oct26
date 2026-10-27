@@ -36,6 +36,42 @@ const event = record("s1", "event", {
 });
 
 describe("public visibility and integrity", () => {
+  it("prevents analysis payloads from overriding visibility-filtered records or dataset metadata", () => {
+    const rows = [source, article, event];
+    for (const key of ["A", "E", "S", "B", "TP", "meta", "__proto__"]) {
+      rows.push(
+        record(`analysis-${key}`, "analysis", { key, data: [{ i: "hidden" }] })
+      );
+    }
+    rows.push(
+      record("analysis-P", "analysis", {
+        key: "P",
+        data: { findings: ["provided"] },
+      })
+    );
+    const result = assemblePublicDataset(
+      { meta: { origin: "fixture" }, TP: [{ e: ["s1"] }] },
+      rows,
+      "fixture"
+    );
+    expect((result.A as Record<string, unknown>[]).map(row => row.i)).toEqual([
+      "h1",
+    ]);
+    expect((result.E as Record<string, unknown>[]).map(row => row.i)).toEqual([
+      "s1",
+    ]);
+    expect((result.S as Record<string, unknown>[]).map(row => row.s)).toEqual([
+      "birgun",
+    ]);
+    expect(result.B).toEqual([]);
+    expect(result.TP).toEqual([{ e: ["s1"] }]);
+    expect(result.meta).toMatchObject({
+      origin: "fixture",
+      publicCounts: { articles: 1, events: 1, sources: 1 },
+    });
+    expect(result.P).toEqual({ findings: ["provided"] });
+    expect(Object.getPrototypeOf(result)).toBe(Object.prototype);
+  });
   it("includes only published records and suppresses private notes from other tables by construction", () => {
     const result = assemblePublicDataset(
       { meta: {}, TP: [{ e: ["s1", "s2"] }] },

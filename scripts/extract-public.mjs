@@ -378,7 +378,9 @@ function main() {
   const sourceHash = sha256(sourceBytes);
   const dataHash = sha256(dataScript.body);
 
-  write(out("data/original-dataset.json"), JSON.stringify(data));
+  const datasetPath = out("data/original-dataset.json");
+  write(datasetPath, JSON.stringify(data));
+  const datasetFileHash = sha256(fs.readFileSync(datasetPath));
   write(out("client/public/assets/capraz-manset-logo.svg"), decodeSvgDataUri(logos.h));
   write(out("client/public/assets/logo-horizontal.svg"), decodeSvgDataUri(logos.h));
   write(out("client/public/assets/capraz-manset-logo-dark.svg"), decodeSvgDataUri(logos.hd));
@@ -392,6 +394,7 @@ function main() {
       sha256: sourceHash,
       bytes: sourceBytes.length,
       datasetSha256: dataHash,
+      datasetFileSha256: datasetFileHash,
       datasetFormat: "compact original D shape; all supplied keys preserved",
     },
     counts: {

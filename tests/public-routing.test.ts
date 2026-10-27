@@ -22,6 +22,30 @@ describe("public hash compatibility", () => {
     expect(unsupported.location.hash).toBe("#/");
   });
 
+  it.each(["%FF", "%E0%A4", "%ED%A0%80", "%C0%AF"])(
+    "normalizes invalid UTF-8 escapes before legacy decoding: %s",
+    value => {
+      const windowLike = {
+        location: { hash: `#/ara?q=${value}`, assign: vi.fn() },
+      } as unknown as Window;
+
+      expect(parsePublicHash(windowLike.location.hash).malformed).toBe(true);
+      normalizeUnsafeInitialHash(windowLike);
+      expect(windowLike.location.hash).toBe("#/");
+    }
+  );
+
+  it("preserves valid UTF-8 Turkish search terms and escaped delimiters", () => {
+    const hash = "#/ara?q=%C3%87apraz+Man%C5%9Fet&label=a%3Db%26c";
+    const parsed = parsePublicHash(hash);
+    expect(parsed.malformed).toBe(false);
+    expect(parsed.params.get("q")).toBe("Çapraz Manşet");
+    expect(parsed.params.get("label")).toBe("a=b&c");
+    const windowLike = { location: { hash } } as unknown as Window;
+    normalizeUnsafeInitialHash(windowLike);
+    expect(windowLike.location.hash).toBe(hash);
+  });
+
   it("redirects every legacy hash-admin route to the protected workspace", () => {
     for (const hash of ["#/yonetim", "#/yonetim?t=panel", "#/yonetim?t=inceleme", "#/yonetim/legacy"]) {
       expect(isLegacyAdminHash(hash)).toBe(true);
