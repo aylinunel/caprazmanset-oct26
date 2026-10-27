@@ -1,0 +1,65 @@
+{
+  "scope": "Mounted original renderer in jsdom, six alternating paired samples; not a browser/RUM/Core Web Vitals claim",
+  "queries": {
+    "girne": {
+      "before": {
+        "samples": 6,
+        "medianMs": 79.49208700000008,
+        "p95Ms": 107.42626699999983,
+        "total": 6,
+        "initialEventCards": 6,
+        "headlines": 40,
+        "htmlCharacters": 21610
+      },
+      "after": {
+        "samples": 6,
+        "medianMs": 57.33242099999961,
+        "p95Ms": 64.23700600000029,
+        "total": 6,
+        "initialEventCards": 6,
+        "headlines": 40,
+        "htmlCharacters": 21681
+      }
+    },
+    "sözcü": {
+      "before": {
+        "samples": 6,
+        "medianMs": 44.96463300000005,
+        "p95Ms": 46.88189999999986,
+        "total": 1,
+        "initialEventCards": 1,
+        "headlines": 15,
+        "htmlCharacters": 7631
+      },
+      "after": {
+        "samples": 6,
+        "medianMs": 23.5506519999999,
+        "p95Ms": 26.97749500000009,
+        "total": 1,
+        "initialEventCards": 1,
+        "headlines": 15,
+        "htmlCharacters": 7702
+      }
+    },
+    "an": {
+      "before": {
+        "samples": 6,
+        "medianMs": 2993.115814999999,
+        "p95Ms": 3105.2309950000017,
+        "total": 897,
+        "initialEventCards": 897,
+        "headlines": 40,
+        "htmlCharacters": 1122414
+      },
+      "after": {
+        "samples": 6,
+        "medianMs": 134.79515799999717,
+        "p95Ms": 140.9996800000008,
+        "total": 897,
+        "initialEventCards": 24,
+        "headlines": 40,
+        "htmlCharacters": 58255
+      }
+    }
+  }
+}

@@ -32,3 +32,7 @@ Design read: Turkish public evidence desk; source-preserving editorial interface
 
 ## Delivery
 Run regression/unit checks, type checking and production build. Include setup instructions and a source review report. Save a checkpoint, then use the GitHub connection flow to create a new private repository (suggested name `capraz-manset`). No automatic public deployment and no invented verified political claims.
+
+## Search efficiency refinement — 2026-10-27
+
+Apply the requested hybrid-search skill's measurement, bounded-result and relevance-preservation principles to the existing lexical search. The measured bottlenecks are repeated Turkish locale folding and unbounded full event-card rendering, not deficient semantic recall. Add a lazy, per-mounted-runtime folded-text cache and progressive 24-card event batches, preserving exact substring matches, original ordering, the two-character minimum, dynamic notice/source eligibility, the 40-headline cap, counts and every result's reachability. Keep immediate input/URL updates and all existing sanitizer/link policies. Install a hand-maintained search overlay from the already generated `installPublicOverrides()` hook; do not hand-edit generated renderer files or change the supplied dataset. No vector service, embedding model, RRF reranking, database migration, public deployment or new recurring work is warranted by this efficiency request. Semantic retrieval remains a separate quality feature requiring its own evidence and evaluation.

@@ -8,6 +8,7 @@ import {
   parsePublicHash,
   redirectLegacyAdmin,
 } from "./hash";
+import { installSearchOptimization } from "./search-optimization";
 
 export interface PublicRuntime {
   data: Record<string, unknown>;
@@ -168,6 +169,7 @@ export function createPublicRuntime(options: RuntimeOptions): PublicRuntime {
   if (!actualWindow) throw new Error("Public site requires a browser window.");
   const actualDocument = options.host.ownerDocument;
   const disposers: Array<() => void> = [];
+  let disposeSearch: (() => void) | undefined;
   const listenerMap = new WeakMap<
     object,
     Map<EventListenerOrEventListenerObject, EventListener>
@@ -369,6 +371,8 @@ export function createPublicRuntime(options: RuntimeOptions): PublicRuntime {
       // its invalid-Date display only after the generated formatters exist.
       preserveUnknownDate("fmtD");
       preserveUnknownDate("fmtDT");
+      disposeSearch?.();
+      disposeSearch = installSearchOptimization(runtime);
 
       type RuntimeCorrectionEntityKind = CorrectionEntityKind;
       type RuntimeCorrectionTarget = {
@@ -467,6 +471,8 @@ export function createPublicRuntime(options: RuntimeOptions): PublicRuntime {
       }
     },
     cleanup() {
+      disposeSearch?.();
+      disposeSearch = undefined;
       const acid = runtime.acid as { stop?: () => void } | undefined;
       try {
         acid?.stop?.();

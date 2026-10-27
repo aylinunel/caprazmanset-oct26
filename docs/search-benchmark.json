@@ -1,0 +1,35 @@
+{
+  "corpusArticles": 15913,
+  "querySet": [
+    "enflasyon",
+    "Girne",
+    "Sözcü",
+    "İSTANBUL",
+    "IĞDIR",
+    "belediye",
+    "Ankara",
+    "İçişleri",
+    "deprem",
+    "yolsuzluk",
+    "ANKARA 4.",
+    "an",
+    "bulunmayanzyx"
+  ],
+  "baseline": {
+    "queries": 260,
+    "medianMs": 21.003993999999693,
+    "p95Ms": 22.260239999999612
+  },
+  "cached": {
+    "queries": 260,
+    "medianMs": 0.921491999999489,
+    "p95Ms": 3.2822080000000824
+  },
+  "coldHeadlineIndexMs": 21.817924000000005,
+  "coldGlobalIndexMs": 26.85206100000005,
+  "foldedCharacters": 1158999,
+  "foldedUtf16BytesLowerBound": 2317998,
+  "medianReductionPercent": 95.61277726512633,
+  "resultParity": true,
+  "scope": "Offline Node headline matching; excludes rendering/network/real-user responsiveness"
+}

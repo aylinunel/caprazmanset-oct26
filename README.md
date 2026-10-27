@@ -73,6 +73,8 @@ The extractor `scripts/extract-public.mjs` reads the owner-supplied original HTM
 
 The full compatibility dataset is still downloaded and indexed client-side for feature parity. The server caches its assembled view briefly and invalidates it after editorial changes. This remains the principal performance limit; replacing legacy views with paginated endpoint-driven components is a future migration rather than an unreported completed feature.
 
+Search now lazily caches Turkish-locale folded text and renders event matches in accessible batches of 24, retaining exact matching, original order, full totals and every match's reachability. No semantic vector search or embedding service was introduced: the measured issue was repeated text normalization and unbounded card rendering, not semantic recall. See the [search efficiency report](PERF.md), including costs and measurement limits. Reproduce the comparisons with `pnpm exec tsx scripts/benchmark-search.ts` and `pnpm exec tsx scripts/benchmark-search-render.ts`.
+
 ## Private reader feedback
 
 Correction buttons submit a private feedback intake with a stable public record target, claim, explanation, optional evidence URL, consent and receipt ID. They do not collect contact fields or keep requester data in browser storage. Submissions never change the challenged record automatically. Administrators can triage or close intakes with logged reasons; material content changes use the ordinary versioned publication workflow.

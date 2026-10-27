@@ -172,6 +172,17 @@ describe("public runtime DOM facade", () => {
       expect(() => mountLegacyRenderer(runtime)).not.toThrow();
       dom.window.history.replaceState(null, "", "#/harita");
       expect(() => (runtime as typeof runtime & { route(): void }).route()).not.toThrow();
+      dom.window.history.replaceState(null, "", "#/ara?q=an");
+      expect(() => (runtime as typeof runtime & { route(): void }).route()).not.toThrow();
+      expect(root.querySelector("[data-cm-search-total]")?.textContent).toBe("897");
+      expect(root.querySelectorAll("#sres .xcard")).toHaveLength(24);
+      root.querySelector<HTMLButtonElement>("[data-cm-search-more]")!.click();
+      expect(root.querySelectorAll("#sres .xcard")).toHaveLength(48);
+      const input = root.querySelector<HTMLInputElement>("#sq")!;
+      input.value = "girne";
+      input.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
+      expect(dom.window.location.hash).toBe("#/ara?q=girne");
+      expect(root.querySelectorAll("#sres .xcard")).toHaveLength(6);
     });
     expect(root.querySelector("#view")).not.toBeNull();
     runtime.cleanup();
