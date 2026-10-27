@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 import contextlib
 from email.message import Message
+from http.client import IncompleteRead
 import io
 import json
 import socket
@@ -19,6 +20,15 @@ import import_news  # noqa: E402
 
 class FakeResponse:
     status = 202
+
+    def __init__(self, count=1, run_id="oct27_hurriyet_01", raw=None):
+        self.raw = raw if raw is not None else json.dumps({
+            "accepted": count, "duplicates": 0, "rejected": 0,
+            "status": "draft", "runId": run_id,
+        }).encode()
+
+    def read(self, size=-1):
+        return self.raw if size < 0 else self.raw[:size]
 
     def close(self):
         pass
@@ -96,7 +106,7 @@ class ImportNewsTests(unittest.TestCase):
 
         def opener(request, timeout):
             calls.append(json.loads(request.data.decode("utf-8")))
-            return FakeResponse()
+            return FakeResponse(count=len(calls[-1]["articles"]))
 
         output = io.StringIO()
         result = import_news.execute(self.args(path), environ={"CAPRAZ_IMPORT_TOKEN": "not-logged"},
@@ -157,7 +167,7 @@ class ImportNewsTests(unittest.TestCase):
         def opener(request, timeout):
             self.assertEqual(timeout, import_news.REQUEST_TIMEOUT_SECONDS)
             requests.append(request)
-            return FakeResponse()
+            return FakeResponse(count=len(json.loads(request.data)["articles"]))
 
         output = io.StringIO()
         code = import_news.execute(args, environ={"CAPRAZ_IMPORT_TOKEN": "unit-test-secret"}, opener=opener,
@@ -184,6 +194,31 @@ class ImportNewsTests(unittest.TestCase):
         )
         self.assertEqual(code, 2)
         self.assertIn("CAPRAZ_IMPORT_TOKEN is required", output.getvalue())
+
+    def test_acknowledgement_requires_persisted_drafts_for_the_exact_batch(self):
+        valid = {"accepted": 1, "duplicates": 0, "rejected": 0,
+                 "status": "draft", "runId": "round1"}
+        for raw in (b"<html>wrong service</html>", b"[]", b"{}", b"x" * 65537,
+                    *[json.dumps({**valid, **change}).encode() for change in (
+                        {"runId": "another"}, {"status": "published"}, {"accepted": 0},
+                        {"accepted": True}, {"duplicates": -1}, {"rejected": 1})]):
+            with self.subTest(raw=raw[:80]), self.assertRaises(import_news.ApiError):
+                import_news.validate_acknowledgement(FakeResponse(raw=raw), "round1", 1)
+        import_news.validate_acknowledgement(FakeResponse(raw=json.dumps(valid).encode()), "round1", 1)
+        duplicate = {**valid, "accepted": 0, "duplicates": 1}
+        import_news.validate_acknowledgement(FakeResponse(raw=json.dumps(duplicate).encode()), "round1", 1)
+
+    def test_truncated_acknowledgement_is_a_delivery_failure_not_an_uncaught_error(self):
+        class Truncated(FakeResponse):
+            def read(self, size=-1):
+                raise IncompleteRead(b'{"accepted":', 20)
+        path = self.write_jsonl([self.article()])
+        output = io.StringIO()
+        code = import_news.execute(self.args(path), environ={"CAPRAZ_IMPORT_TOKEN": "unit-test-only"},
+                                   opener=lambda *_args, **_kwargs: Truncated(), stream=output)
+        self.assertEqual(code, 1)
+        self.assertIn("rejected=1", output.getvalue())
+        self.assertNotIn('{"accepted":', output.getvalue())
 
     def test_transient_retries_are_bounded_and_permanent_failure_is_nonzero(self):
         path = self.write_jsonl([self.article()])

@@ -23,7 +23,8 @@ subgraph group_editorial["Editorial desk"]
 end
 
 subgraph group_collection["News collection"]
-  node_collector["Safe collector entrypoint (collect.py)"]
+  node_collector["Historical collector (collect.py)"]
+  node_live_collector["Live metadata worker (live.py)"]
   node_backfill["Robots-aware backfill (backfill.py)"]
   node_news["Publisher fetchers (news.py)"]
   node_extract["Article extraction (extract.py)"]
@@ -67,6 +68,8 @@ node_db_access -->|"uses schema"| node_records
 node_records -->|"persists records"| node_mysql
 node_correction_ui -.->|"submits intake"| node_editorial_http
 node_collector -->|"runs backfill"| node_backfill
+node_live_collector -->|"reuses parsers"| node_news
+node_live_collector -->|"delivers drafts"| node_importer
 node_backfill -->|"uses fetchers"| node_news
 node_news -->|"extracts articles"| node_extract
 node_news -.->|"fetches from"| node_publisher
@@ -84,7 +87,7 @@ classDef toneIndigo fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
 classDef toneTeal fill:#ccfbf1,stroke:#0f766e,stroke-width:1.5px,color:#134e4a
 class node_public_app,node_public_bootstrap,node_public_runtime,node_legacy_features,node_analysis toneBlue
 class node_admin_ui,node_correction_ui,node_editorial_router,node_editorial_http,node_repository,node_mysql toneAmber
-class node_collector,node_backfill,node_news,node_extract,node_importer toneMint
+class node_collector,node_live_collector,node_backfill,node_news,node_extract,node_importer toneMint
 class node_api_client,node_server_entry,node_app_router toneRose
 class node_db_access,node_records,node_reader,node_admin,node_publisher toneIndigo
 ```
@@ -124,6 +127,16 @@ The historical import is transactional and idempotent. It records a content hash
 
 ## Collect and review Turkish news
 
+For the 19 requested sources, use the new robots-aware near-real-time worker. A bounded live trial collected **34 metadata records from 17 sources**; Instacp and GazetelerdeBugün failed robots checks; public DNS returned `NXDOMAIN` for their configured domains, so verified current addresses are needed. See the [per-source resolutions and operating instructions](docs/live-source-collection.md) and [timestamped live evidence](docs/live-source-validation.json).
+
+```bash
+# After the Python environment setup below, run once or explicitly poll.
+python scraper/live.py --limit 5
+python scraper/live.py --interval 300 --limit 10
+```
+
+The worker persists metadata and a retryable outbox locally, reports per-source health, and optionally delivers authenticated drafts with `--endpoint`. A configured forward-proxy environment can explicitly use `--proxy-dns`; direct mode validates actual connector DNS and ignores ambient proxies. Publication remains an administrator action. Historical coverage counts and source coordinates are preserved.
+
 Use Python 3.11+ and a virtual environment:
 
 ```bash
@@ -134,7 +147,7 @@ python scraper/collect.py --only birgun --output work/news.jsonl --db work/news.
 python scraper/import_news.py --input work/news.jsonl --endpoint https://YOUR_SITE --run-id collection_001 --dry-run
 ```
 
-The safe entrypoint uses the upstream robots-aware backfill implementation for one Türkiye calendar day and exactly one explicitly selected publisher per run, with bounded pages, sitemap count, timeout, concurrency and request spacing. The upstream live poller does not enforce robots rules and is **not** the default integration entrypoint. Neither command is an archive-completeness guarantee or access-control bypass. Full extracted bodies may stay in the local upstream SQLite file when collection is intentionally run; the integration does not send bodies to the website.
+The historical `collect.py` entrypoint uses the upstream robots-aware backfill implementation for one Türkiye calendar day and exactly one explicitly selected publisher per run, with bounded pages, sitemap count, timeout, concurrency and request spacing. The unchanged upstream `news.py` poller does not enforce robots rules and should not be used as a live shortcut; `live.py` supplies the guarded transport. Neither entrypoint guarantees archive completeness. Full extracted bodies may stay in the local upstream backfill SQLite file when that collection is intentionally run; the live worker and website import retain metadata only.
 
 In the **Türkçe scraper** tab of `/yonetim`, generate a 30-day import-only token. Store it in the process environment, not in a file, command-line argument, logs or source code. For example, read it without echo in Bash:
 
@@ -145,7 +158,7 @@ python scraper/import_news.py --input work/news.jsonl --endpoint https://YOUR_SI
 unset CAPRAZ_IMPORT_TOKEN
 ```
 
-The adapter sends bounded batches to `POST /api/collector/import`. Tokens are hashed server-side and can be revoked. Publisher host/name validation and unique source+URL hashes protect attribution and deduplication. An administrator must then verify each draft and explicitly publish it. Unknown or unpublished source profiles must be reviewed first. There is no automatic event clustering of new imports, polling service, schedule or GitHub Actions collection job.
+The adapter sends bounded batches to `POST /api/collector/import` and requires an exact draft acknowledgement before treating delivery as successful. Tokens are hashed server-side and can be revoked. Publisher host/name validation and unique source+URL hashes protect attribution and deduplication. An administrator must then verify each draft and explicitly publish it. Unknown or unpublished source profiles must be reviewed first. Live polling is available as an explicit command; no polling service, schedule, automatic event clustering, or GitHub Actions collection job is installed.
 
 See [scraper integration](docs/scraper-integration.md) for the exact contract, upstream provenance, offline tests and failure behavior.
 

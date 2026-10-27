@@ -30,9 +30,11 @@ The exact upstream source at `fa827a410c532e273173abfa36e29090100c0dd6` is retai
 
 `collect.py` delegates to the upstream robots-aware backfill path for a finite day/publisher selection. The upstream live poller lacks robots checks and is not the default command. The Python adapter reads saved JSONL, excludes bodies, validates attribution and sends batches of at most 100 records. It never dereferences article URLs, follows redirects, or runs indefinitely. HTTPS destination and resolved-IP restrictions protect bearer transport; local tests must explicitly choose `--allow-local` and `127.0.0.1`.
 
+`live.py` adds explicit periodic metadata collection for 19 requested sources using the existing parsers. `live_http.py` enforces per-hop robots rules, publisher HTTPS boundaries, pacing, Retry-After cooldowns and bounded responses/cache. Direct mode validates actual connector DNS addresses; explicit proxy mode delegates DNS/connection trust to the configured proxy. Local SQLite retains normalized metadata and pending delivery atomically; a strict matching draft acknowledgement is required before marking a batch delivered. Separate live health never alters historical counts or political coordinates. See [live source collection](live-source-collection.md) for verified routes and deployment prerequisites.
+
 An administrator-generated `cm_` token is shown once, retained only in UI memory, hashed in MySQL, expires after 30 days, and can be revoked. The collector endpoint rechecks expiry, revocation and the owning user's current admin role. Import authorization does not grant edit/publish/delete rights. Server publisher host/name bounds, schema limits, a unique source+URL hash and insert-ignore duplicate handling protect idempotency without changing existing published records. Each new draft has run ID, upstream commit, fetch time and method provenance.
 
-No collection schedule, worker daemon, GitHub Actions workflow, public deployment or publication job is installed.
+No collection schedule, worker daemon, public deployment or publication job is installed. GitHub Actions runs offline checks, including the new live worker tests.
 
 ## Private feedback intake
 
