@@ -1,0 +1,13 @@
+{
+  "upstreamRepository": "https://github.com/aylinunel/turkish-news-scraper",
+  "upstreamCommit": "fa827a410c532e273173abfa36e29090100c0dd6",
+  "retrievedFor": "Çapraz Manşet bounded scraper integration",
+  "copiedFiles": {
+    "python": "All top-level *.py files, including upstream tests",
+    "registry": "sources.json (53 publishers)",
+    "dependencies": "requirements.txt and requirements.lock",
+    "documentation": ["README.md", "VALIDATION.md", "API_EVALUATION.md"]
+  },
+  "excluded": [".git", ".github", "live_source_status.json", "SQLite databases", "JSONL collection results"],
+  "licenseStatus": "No LICENSE, COPYING, or NOTICE file was present in the pinned upstream Git tree at import time. No license is asserted or invented by this integration."
+}

@@ -1,0 +1,62 @@
+{
+  "source": "supplied ÇaprazManset3.0 renderer",
+  "sourceSha256": "57bbba8caeaf63483a2026ce4fa5949fc302ea56a84b906b3af107ddb8607021",
+  "modules": [
+    {
+      "id": "00-foundation",
+      "file": "client/src/public/legacy/00-foundation.js",
+      "functions": 33,
+      "initializers": 36
+    },
+    {
+      "id": "01-events-and-sources",
+      "file": "client/src/public/legacy/01-events-and-sources.js",
+      "functions": 19,
+      "initializers": 2
+    },
+    {
+      "id": "02-maps-and-rules",
+      "file": "client/src/public/legacy/02-maps-and-rules.js",
+      "functions": 21,
+      "initializers": 8
+    },
+    {
+      "id": "03-analysis-and-findings",
+      "file": "client/src/public/legacy/03-analysis-and-findings.js",
+      "functions": 33,
+      "initializers": 20
+    },
+    {
+      "id": "04-public-routes",
+      "file": "client/src/public/legacy/04-public-routes.js",
+      "functions": 44,
+      "initializers": 15
+    },
+    {
+      "id": "05-narrative-and-advanced",
+      "file": "client/src/public/legacy/05-narrative-and-advanced.js",
+      "functions": 33,
+      "initializers": 14
+    },
+    {
+      "id": "06-presentation-and-corrections",
+      "file": "client/src/public/legacy/06-presentation-and-corrections.js",
+      "functions": 27,
+      "initializers": 8
+    },
+    {
+      "id": "07-historical-features",
+      "file": "client/src/public/legacy/07-historical-features.js",
+      "functions": 45,
+      "initializers": 10
+    },
+    {
+      "id": "08-historical-v3",
+      "file": "client/src/public/legacy/08-historical-v3.js",
+      "functions": 37,
+      "initializers": 12
+    }
+  ],
+  "totalFunctions": 292,
+  "totalSequentialInitializers": 125
+}

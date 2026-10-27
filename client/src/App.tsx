@@ -1,42 +1,60 @@
-import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/NotFound";
+import { useEffect, useRef, useState } from "react";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
-import { ThemeProvider } from "./contexts/ThemeContext";
-import Home from "./pages/Home";
+import Admin from "./pages/Admin";
+import NotFound from "./pages/NotFound";
 
-function Router() {
-  // make sure to consider if you need authentication for certain routes
+function PublicWebsite() {
+  const host = useRef<HTMLDivElement>(null);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let disposed = false;
+    let cleanup: (() => void) | undefined;
+    const mount = async () => {
+      try {
+        const { mountPublicWebsite } = await import("./public/bootstrap");
+        if (disposed || !host.current) return;
+        const stop = await mountPublicWebsite(host.current);
+        if (typeof stop === "function") {
+          if (disposed) stop();
+          else cleanup = stop;
+        }
+      } catch (cause) {
+        if (!disposed)
+          setError(
+            cause instanceof Error ? cause.message : "Site could not load"
+          );
+      }
+    };
+    void mount();
+    return () => {
+      disposed = true;
+      cleanup?.();
+    };
+  }, []);
   return (
-    <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
-      <Route component={NotFound} />
-    </Switch>
+    <>
+      {error && (
+        <main className="load-error">
+          <h1>Çapraz Manşet yüklenemedi</h1>
+          <p role="alert">{error}</p>
+          <button onClick={() => window.location.reload()}>Yeniden dene</button>
+        </main>
+      )}
+      <div ref={host} id="public-site-host" />
+    </>
   );
 }
 
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
-
-function App() {
+export default function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
-      </ThemeProvider>
+      <Switch>
+        <Route path="/yonetim" component={Admin} />
+        <Route path="/" component={PublicWebsite} />
+        <Route path="/404" component={NotFound} />
+        <Route component={NotFound} />
+      </Switch>
     </ErrorBoundary>
   );
 }
-
-export default App;

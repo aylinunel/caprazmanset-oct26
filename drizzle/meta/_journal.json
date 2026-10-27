@@ -8,6 +8,27 @@
       "when": 1788785580464,
       "tag": "0000_initial_users",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1793128681272,
+      "tag": "0001_yellow_lifeguard",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1793128989989,
+      "tag": "0002_zippy_talos",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1793129607114,
+      "tag": "0003_breezy_tusk",
+      "breakpoints": true
     }
   ]
 }

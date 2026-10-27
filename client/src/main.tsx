@@ -1,5 +1,5 @@
 import { trpc } from "@/lib/trpc";
-import { COOKIE_NAME, UNAUTHED_ERR_MSG } from '@shared/const';
+import { COOKIE_NAME, UNAUTHED_ERR_MSG } from "@shared/const";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
@@ -54,13 +54,16 @@ const trpcClient = trpc.createClient({
             const pair = raw.split(";").find(s => s.trim().startsWith(prefix));
             const token = pair?.trim().slice(prefix.length);
             if (token) {
-              return { Authorization: `Bearer ${token}` };
+              return {
+                Authorization: `Bearer ${token}`,
+                "X-Capraz-Request": "1",
+              };
             }
           }
         } catch {
           // sessionStorage unavailable
         }
-        return {};
+        return { "X-Capraz-Request": "1" };
       },
       fetch(input, init) {
         return globalThis.fetch(input, {
