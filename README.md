@@ -1,5 +1,7 @@
 # Çapraz Manşet
 
+Private repository: [aylinunel/caprazmanset-oct26](https://github.com/aylinunel/caprazmanset-oct26). The main branch and Manus repository connection were verified on 2026-10-27.
+
 Source-preserving refactor of the supplied Çapraz Manşet 3.0 HTML, with a protected Turkish editorial desk and the owner's existing [Turkish News Scraper](https://github.com/aylinunel/turkish-news-scraper) integrated at `fa827a410c532e273173abfa36e29090100c0dd6`.
 
 The public site retains the supplied event comparisons, source profiles, spectrum/atlas, framing and headline-rule analysis, historical findings, methodology, search, and personal reading views. The monolithic artifact is now divided into feature modules, assets, a pure analysis layer, server-side editorial records and a separate collector. The public renderer intentionally remains a transitional imperative runtime to preserve its extensive existing behavior; this is not a claim that all legacy design debt has disappeared.
@@ -41,7 +43,7 @@ python scraper/collect.py --only birgun --output work/news.jsonl --db work/news.
 python scraper/import_news.py --input work/news.jsonl --dry-run
 ```
 
-The safe entrypoint uses the upstream robots-aware backfill implementation for one Türkiye calendar day and explicit publishers, with bounded pages, sitemap count, timeout, concurrency and request spacing. The upstream live poller does not enforce robots rules and is **not** the default integration entrypoint. Neither command is an archive-completeness guarantee or access-control bypass. Full extracted bodies may stay in the local upstream SQLite file when collection is intentionally run; the integration does not send bodies to the website.
+The safe entrypoint uses the upstream robots-aware backfill implementation for one Türkiye calendar day and exactly one explicitly selected publisher per run, with bounded pages, sitemap count, timeout, concurrency and request spacing. The upstream live poller does not enforce robots rules and is **not** the default integration entrypoint. Neither command is an archive-completeness guarantee or access-control bypass. Full extracted bodies may stay in the local upstream SQLite file when collection is intentionally run; the integration does not send bodies to the website.
 
 In the **Türkçe scraper** tab of `/yonetim`, generate a 30-day import-only token. Store it in the process environment, not in a file, command-line argument, logs or source code. For example, read it without echo in Bash:
 
@@ -63,6 +65,7 @@ pnpm check
 pnpm test
 pnpm build
 python -m unittest -v scraper/tests/test_import_news.py
+python -m unittest -v scraper/tests/test_collect.py
 python -m unittest discover -s scraper/upstream -p 'test_*.py' -v
 ```
 
@@ -78,6 +81,6 @@ This is a basic private intake/manual-review queue, **not** a full independent a
 
 ## Reviews, deployment and licenses
 
-The [original code review](docs/original-code-review.md) records the source artifact's problems and strengths. The final implementation review and architecture notes document resolved controls and remaining limits. No public deployment, continuous collection, or external automation is enabled by this repository export. Saving a version and publishing it are separate actions.
+The [original code review](docs/original-code-review.md) records the source artifact's problems and strengths. The [release review](docs/release-review.md), [validation record](docs/validation.md) and architecture notes document resolved controls and remaining limits. The pre-remediation implementation review is retained as a dated record, not the final release verdict. No public deployment, continuous collection, or external automation is enabled by this repository export. Saving a version and publishing it are separate actions.
 
 This repository is private by default. The upstream scraper at the recorded commit contains no LICENSE/COPYING/NOTICE file; no upstream license has been invented. Supplied content and branding remain the owner's material. Do not publish or redistribute the copied source/data without resolving the applicable permissions. Dependency licenses retain their own terms.
