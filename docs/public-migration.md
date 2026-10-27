@@ -21,7 +21,7 @@ Legacy `#/yonetim...` hashes are handled before data fetch and again on every ha
 ## Extracted artifacts
 
 - Historical data: `data/original-dataset.json`, compact original shape with every supplied key retained.
-- Import provenance: `data/import-manifest.json`, including the original artifact SHA-256, source byte count, supplied counts, and `provenance: "provided"`.
+- Import provenance: `data/import-manifest.json`, including the original artifact SHA-256, source byte count, supplied counts, and `provenance: "provided"`. `source.datasetSha256` preserves the hash of the original embedded JSON script body; `source.datasetFileSha256` hashes the exact emitted `data/original-dataset.json` bytes, including the trailing newline. The hashes differ because extraction parses and serializes the original body.
 - Actual supplied wordmark: `client/public/assets/capraz-manset-logo.svg` (plus original dark variant and comparison mark in the same directory). No replacement logo is drawn or generated.
 - Turkish pure layer: `client/src/analysis/turkish.js`, exporting `CM3` and the original pure calculation API. The original global contract was `root.CM3`; this migration makes it a module export and supplies it to the renderer runtime.
 
@@ -69,20 +69,18 @@ to `POST /api/editorial/corrections`. Success is shown only for a backend respon
 ## Reproduce and test
 
 ```bash
-node scripts/extract-public.mjs /home/ubuntu/upload/ÇaprazManşet3.0.html
-pnpm exec tsc --noEmit
-pnpm exec vite build
-cat >/tmp/capraz-public-vitest.config.ts <<'EOF'
-import { defineConfig } from 'vitest/config';
-export default defineConfig({
-  root: '/home/ubuntu/capraz',
-  test: { environment: 'node', include: ['tests/public-*.test.ts'] },
-});
-EOF
-pnpm exec vitest run --config /tmp/capraz-public-vitest.config.ts
+pnpm check
+pnpm build
+pnpm test
+
+# Optional: verify the original owner-supplied HTML when available locally.
+CAPRAZ_ORIGINAL_HTML=/path/to/original.html pnpm test
+
+# Regenerate only with the approved original artifact.
+node scripts/extract-public.mjs /path/to/original.html
 ```
 
-The root Vitest configuration intentionally includes only server tests, so the temporary explicit configuration above is necessary until the parent chooses to add public tests to CI. The extractor needs the approved original artifact. It must not be run with an alternate HTML source unless the import manifest is intentionally renewed and reviewed.
+The root Vitest configuration includes both server and public tests, and GitHub Actions runs them. Mandatory artifact checks verify the committed dataset against its manifest hash and counts without requiring the original upload. Original-HTML hash verification is a separate optional test, skipped only when `CAPRAZ_ORIGINAL_HTML` is absent; a supplied missing or mismatched file fails. The extractor still needs the approved original artifact. It must not be run with an alternate HTML source unless the import manifest is intentionally renewed and reviewed.
 
 ## Residual debt and performance limits
 

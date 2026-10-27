@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import subprocess
 import sys
 from datetime import date, datetime, timedelta, timezone
@@ -89,11 +90,22 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         date.fromisoformat(args.date)
     except ValueError:
         parser.error("--date must be YYYY-MM-DD")
-    if args.delay < 0.6:
-        parser.error("--delay cannot be less than the safe default of 0.6 seconds")
+    if not math.isfinite(args.delay) or args.delay < 0.6:
+        parser.error("--delay must be finite and at least the safe default of 0.6 seconds")
     registry = json.loads((UPSTREAM / "sources.json").read_text(encoding="utf-8"))
     if args.only not in {source["slug"] for source in registry}:
         parser.error("--only must identify exactly one registered publisher")
+    paths = (("--output", args.output), ("--db", args.db), ("--status", args.status))
+    for index, (name, path) in enumerate(paths):
+        for other_name, other_path in paths[:index]:
+            try:
+                same_file = path.resolve() == other_path.resolve() or (
+                    path.exists() and other_path.exists() and path.samefile(other_path)
+                )
+            except (OSError, RuntimeError):
+                parser.error("collection file paths could not be resolved safely")
+            if same_file:
+                parser.error(f"{name} and {other_name} must refer to different files")
     return args
 
 

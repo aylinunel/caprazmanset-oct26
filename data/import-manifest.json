@@ -6,6 +6,7 @@
     "sha256": "57bbba8caeaf63483a2026ce4fa5949fc302ea56a84b906b3af107ddb8607021",
     "bytes": 6844576,
     "datasetSha256": "ca837386da609f54aeca06b8a8f43cf703c441c6d7a4b4830586cc440815484c",
+    "datasetFileSha256": "f8785f809a4715debb9141224f600f812c426571eb729b81fcd2b4d7ad72b314",
     "datasetFormat": "compact original D shape; all supplied keys preserved"
   },
   "counts": {

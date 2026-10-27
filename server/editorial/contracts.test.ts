@@ -108,6 +108,17 @@ describe("URL and publisher boundaries", () => {
 });
 
 describe("input invariants", () => {
+  it("keeps analysis identity stable and prevents protected dataset-key overrides", () => {
+    expect(
+      validatePayload("analysis", { key: "P", data: [] }, "analysis-P")
+    ).toEqual({ key: "P", data: [] });
+    expect(() =>
+      validatePayload("analysis", { key: "A", data: [] }, "analysis-P")
+    ).toThrow();
+    expect(() =>
+      validatePayload("analysis", { key: "G", data: [] }, "analysis-P")
+    ).toThrow(/identity/);
+  });
   it("cannot change stable IDs or inject HTML into newly edited payloads", () => {
     expect(() =>
       validatePayload(

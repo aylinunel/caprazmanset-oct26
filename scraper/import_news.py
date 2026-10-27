@@ -146,6 +146,14 @@ def ensure_public_resolution(host: str, destination_port: int, resolver: Callabl
             raise ValidationError("API endpoint resolves to a private or reserved address")
 
 
+def contract_string_length(value: str, *, field_name: str) -> int:
+    """Match JavaScript/Zod string limits and reject unencodable JSON strings."""
+    try:
+        return len(value.encode("utf-16-le")) // 2
+    except UnicodeEncodeError as exc:
+        raise ValidationError(f"{field_name} contains invalid Unicode") from exc
+
+
 def normalized_text(value: Any, *, field_name: str, maximum: int, required: bool) -> str:
     if not isinstance(value, str):
         raise ValidationError(f"{field_name} must be a string")
@@ -154,7 +162,7 @@ def normalized_text(value: Any, *, field_name: str, maximum: int, required: bool
     text = " ".join(unicodedata.normalize("NFC", value).split())
     if required and not text:
         raise ValidationError(f"{field_name} is required")
-    if len(text) > maximum:
+    if contract_string_length(text, field_name=field_name) > maximum:
         raise ValidationError(f"{field_name} exceeds {maximum} characters")
     return text
 
@@ -169,7 +177,7 @@ def normalize_published_at(value: Any) -> str | None:
     text = unicodedata.normalize("NFC", value).strip()
     if not text:
         return None
-    if len(text) > 100:
+    if contract_string_length(text, field_name="published_at") > 100:
         raise ValidationError("published_at exceeds 100 characters")
     return text
 
@@ -253,7 +261,10 @@ def normalize_article_url(value: Any, source: RegistrySource) -> str:
     if not is_source_host(host, source.roots):
         raise ValidationError("url hostname is not allowed for source")
     netloc = host if destination_port is None else f"{host}:{destination_port}"
-    return urlunsplit(("https", netloc, parts.path or "/", parts.query, ""))
+    normalized = urlunsplit(("https", netloc, parts.path or "/", parts.query, ""))
+    if contract_string_length(normalized, field_name="url") > 2048:
+        raise ValidationError("url exceeds 2048 characters")
+    return normalized
 
 
 def normalize_record(value: Any, registry: dict[str, RegistrySource]) -> dict[str, Any]:

@@ -71,12 +71,15 @@ export async function listRecords(input: {
 
 let cachedDataset: { until: number; data: Record<string, unknown> } | null =
   null;
+let datasetGeneration = 0;
 export function invalidateDataset() {
+  datasetGeneration++;
   cachedDataset = null;
 }
 export async function publicDataset() {
   if (cachedDataset && cachedDataset.until > Date.now())
     return cachedDataset.data;
+  const generation = datasetGeneration;
   const db = await database();
   const [manifest] = await db
     .select()
@@ -97,7 +100,10 @@ export async function publicDataset() {
     records,
     manifest.sha256
   );
-  cachedDataset = { until: Date.now() + 30000, data };
+  // A mutation may commit while these reads are in flight. Do not let an
+  // older snapshot restore the cache that the mutation just invalidated.
+  if (generation === datasetGeneration)
+    cachedDataset = { until: Date.now() + 30000, data };
   return data;
 }
 
@@ -156,6 +162,17 @@ export async function saveRecord(
       .set({
         title: input.title,
         payload,
+        ...(old.kind === "article"
+          ? {
+              sourceSlug: String(payload.s),
+              urlHash:
+                typeof payload.u === "string"
+                  ? createHash("sha256")
+                      .update(`${payload.s}\n${payload.u}`)
+                      .digest("hex")
+                  : null,
+            }
+          : {}),
         verificationStatus: input.verificationStatus,
         provenanceNote: input.provenanceNote,
         methodology: input.methodology,
@@ -207,7 +224,7 @@ export async function transitionRecord(
           .from(editorialRecords)
           .where(
             and(
-              eq(editorialRecords.id, `source-${record.sourceSlug}`),
+              eq(editorialRecords.id, `source-${record.payload.s}`),
               eq(editorialRecords.status, "published")
             )
           )

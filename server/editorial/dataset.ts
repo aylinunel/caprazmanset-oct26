@@ -1,4 +1,5 @@
 import type { EditorialRecord } from "../../drizzle/schema";
+import { analysisKeys } from "./validation";
 
 /** Only explicit published records can contribute to this public compatibility view. */
 export function assemblePublicDataset(
@@ -43,7 +44,10 @@ export function assemblePublicDataset(
   data.S = sources;
   data.B = bucket("bias");
   for (const record of records.filter(row => row.kind === "analysis"))
-    if (typeof record.payload.key === "string")
+    if (
+      typeof record.payload.key === "string" &&
+      analysisKeys.some(key => key === record.payload.key)
+    )
       data[record.payload.key] = record.payload.data;
   if (Array.isArray(data.TP))
     data.TP = data.TP.map((topic: Record<string, unknown>) => ({
