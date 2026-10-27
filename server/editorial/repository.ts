@@ -1,5 +1,5 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
-import { and, desc, eq, isNull, gt, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, gt, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
 import {
@@ -148,15 +148,13 @@ export async function saveRecord(
     if (old.kind === "event") payload.t = input.title;
     if (old.kind === "source") payload.n = input.title;
     if (old.kind === "bias") payload.tr = input.title;
-    await tx
-      .insert(recordVersions)
-      .values({
-        recordId: old.id,
-        version: old.version,
-        snapshot: JSON.parse(JSON.stringify(old)),
-        actorId,
-        reason: input.reason,
-      });
+    await tx.insert(recordVersions).values({
+      recordId: old.id,
+      version: old.version,
+      snapshot: JSON.parse(JSON.stringify(old)),
+      actorId,
+      reason: input.reason,
+    });
     await tx
       .update(editorialRecords)
       .set({
@@ -182,16 +180,14 @@ export async function saveRecord(
         version: old.version + 1,
       })
       .where(eq(editorialRecords.id, old.id));
-    await tx
-      .insert(auditEvents)
-      .values({
-        entityId: old.id,
-        action: "updated",
-        actorId,
-        reason: input.reason,
-        beforeStatus: old.status,
-        afterStatus: "draft",
-      });
+    await tx.insert(auditEvents).values({
+      entityId: old.id,
+      action: "updated",
+      actorId,
+      reason: input.reason,
+      beforeStatus: old.status,
+      afterStatus: "draft",
+    });
   });
   invalidateDataset();
 }
@@ -253,29 +249,25 @@ export async function transitionRecord(
           message: errors.join("; "),
         });
     }
-    await tx
-      .insert(recordVersions)
-      .values({
-        recordId: record.id,
-        version: record.version,
-        snapshot: JSON.parse(JSON.stringify(record)),
-        actorId,
-        reason,
-      });
+    await tx.insert(recordVersions).values({
+      recordId: record.id,
+      version: record.version,
+      snapshot: JSON.parse(JSON.stringify(record)),
+      actorId,
+      reason,
+    });
     await tx
       .update(editorialRecords)
       .set({ status, version: record.version + 1 })
       .where(eq(editorialRecords.id, id));
-    await tx
-      .insert(auditEvents)
-      .values({
-        entityId: id,
-        action: status,
-        actorId,
-        reason,
-        beforeStatus: record.status,
-        afterStatus: status,
-      });
+    await tx.insert(auditEvents).values({
+      entityId: id,
+      action: status,
+      actorId,
+      reason,
+      beforeStatus: record.status,
+      afterStatus: status,
+    });
   });
   invalidateDataset();
 }
@@ -285,23 +277,19 @@ export async function issueImportToken(actorId: number, label: string) {
   const token = `cm_${randomBytes(32).toString("hex")}`;
   const id = randomUUID();
   await db.transaction(async tx => {
-    await tx
-      .insert(importTokens)
-      .values({
-        id,
-        actorId,
-        label,
-        tokenHash: createHash("sha256").update(token).digest("hex"),
-        expiresAt: new Date(Date.now() + 30 * 86400000),
-      });
-    await tx
-      .insert(auditEvents)
-      .values({
-        entityId: id,
-        actorId,
-        action: "token_created",
-        reason: label,
-      });
+    await tx.insert(importTokens).values({
+      id,
+      actorId,
+      label,
+      tokenHash: createHash("sha256").update(token).digest("hex"),
+      expiresAt: new Date(Date.now() + 30 * 86400000),
+    });
+    await tx.insert(auditEvents).values({
+      entityId: id,
+      actorId,
+      action: "token_created",
+      reason: label,
+    });
   });
   return { id, token, expiresInDays: 30 };
 }
@@ -350,14 +338,12 @@ export async function revokeToken(id: string, actorId: number) {
       .update(importTokens)
       .set({ revokedAt: new Date() })
       .where(eq(importTokens.id, id));
-    await tx
-      .insert(auditEvents)
-      .values({
-        entityId: id,
-        actorId,
-        action: "token_revoked",
-        reason: "Admin revoked import access",
-      });
+    await tx.insert(auditEvents).values({
+      entityId: id,
+      actorId,
+      action: "token_revoked",
+      reason: "Admin revoked import access",
+    });
   });
 }
 
@@ -403,61 +389,98 @@ export async function importCollectorBatch(
         message: `Source domain/name mismatch: ${article.source}`,
       });
   }
-  await db.transaction(async tx => {
-    for (const article of batch.articles) {
-      const urlHash = createHash("sha256")
-        .update(`${article.source}\n${article.url}`)
-        .digest("hex");
-      const id = `c-${urlHash.slice(0, 40)}`;
-      const [insertResult] = await tx
-        .insert(editorialRecords)
-        .ignore()
-        .values({
-          id,
-          urlHash,
-          kind: "article",
-          sourceSlug: article.source,
-          title: article.title,
-          payload: {
-            i: id,
-            s: article.source,
-            t: article.title,
-            u: article.url,
-            d: article.published_at,
-            c: "gundem",
-            k: [],
-            v: 0,
-            b: "unreviewed",
-            p: 0,
-            e: [],
-            st: null,
-            fetchedAt: article.fetched_at,
-            collectionMethod: article.method,
-            runId: batch.runId,
-          },
-          status: "draft",
-          verificationStatus: "provided",
-          provenanceNote: `Collector ${batch.runId}; upstream ${batch.upstreamCommit}; fetched ${article.fetched_at}`,
-          methodology: `Publisher metadata (${article.method}); not a political or bias assessment`,
-          editorialDisclosure:
-            "Toplanan kayıt; başlık, tarih ve kaynak bağlantısı editör tarafından doğrulanmadı.",
-          evidenceUrl: null,
-        });
-      if (insertResult.affectedRows !== 1) {
-        duplicates++;
-        continue;
-      }
-      await tx
-        .insert(auditEvents)
-        .values({
-          entityId: id,
-          actorId,
-          action: "created",
-          reason: `Collector run ${batch.runId}`,
-          afterStatus: "draft",
-        });
-      accepted++;
+  // One round trip for existing ids, one multi-row insert, one multi-row audit
+  // insert (was two sequential statements per article: up to 200 per batch).
+  const rows = new Map<string, typeof editorialRecords.$inferInsert>();
+  for (const article of batch.articles) {
+    const urlHash = createHash("sha256")
+      .update(`${article.source}\n${article.url}`)
+      .digest("hex");
+    const id = `c-${urlHash.slice(0, 40)}`;
+    if (rows.has(id)) {
+      duplicates++; // the same story twice in one batch
+      continue;
     }
+    rows.set(id, {
+      id,
+      urlHash,
+      kind: "article",
+      sourceSlug: article.source,
+      title: article.title,
+      payload: {
+        i: id,
+        s: article.source,
+        t: article.title,
+        u: article.url,
+        d: article.published_at,
+        c: "gundem",
+        k: [],
+        v: 0,
+        b: "unreviewed",
+        p: 0,
+        e: [],
+        st: null,
+        fetchedAt: article.fetched_at,
+        collectionMethod: article.method,
+        runId: batch.runId,
+      },
+      status: "draft",
+      verificationStatus: "provided",
+      provenanceNote: `Collector ${batch.runId}; upstream ${batch.upstreamCommit}; fetched ${article.fetched_at}`,
+      methodology: `Publisher metadata (${article.method}); not a political or bias assessment`,
+      editorialDisclosure:
+        "Toplanan kayıt; başlık, tarih ve kaynak bağlantısı editör tarafından doğrulanmadı.",
+      evidenceUrl: null,
+    });
+  }
+  await db.transaction(async tx => {
+    const ids = [...rows.keys()];
+    if (!ids.length) return;
+    const existing = new Set(
+      (
+        await tx
+          .select({ id: editorialRecords.id })
+          .from(editorialRecords)
+          .where(inArray(editorialRecords.id, ids))
+      ).map(row => row.id)
+    );
+    let fresh = ids.filter(id => !existing.has(id));
+    duplicates += ids.length - fresh.length;
+    if (!fresh.length) return;
+    const [insertResult] = await tx
+      .insert(editorialRecords)
+      .ignore()
+      .values(fresh.map(id => rows.get(id)!));
+    if (insertResult.affectedRows !== fresh.length) {
+      // A concurrent import committed some of these ids between the read and
+      // the insert. Keep only rows this batch wrote (its own provenance note).
+      const mine = new Set(
+        (
+          await tx
+            .select({
+              id: editorialRecords.id,
+              note: editorialRecords.provenanceNote,
+            })
+            .from(editorialRecords)
+            .where(inArray(editorialRecords.id, fresh))
+        )
+          .filter(row => row.note === rows.get(row.id)!.provenanceNote)
+          .map(row => row.id)
+      );
+      duplicates += fresh.length - mine.size;
+      fresh = fresh.filter(id => mine.has(id));
+      if (!fresh.length) return;
+    }
+    await tx.insert(auditEvents).values(
+      fresh.map(id => ({
+        entityId: id,
+        actorId,
+        action: "created" as const,
+        reason: `Collector run ${batch.runId}`,
+        afterStatus: "draft" as const,
+      }))
+    );
+    accepted = fresh.length;
   });
   return {
     accepted,
@@ -495,14 +518,12 @@ export async function submitIntake(
   const db = await database();
   await db.transaction(async tx => {
     await tx.insert(correctionIntakes).values(input);
-    await tx
-      .insert(auditEvents)
-      .values({
-        entityId: input.id,
-        action: "intake_submitted",
-        reason: "Private reader feedback intake; target unchanged",
-        afterStatus: "submitted",
-      });
+    await tx.insert(auditEvents).values({
+      entityId: input.id,
+      action: "intake_submitted",
+      reason: "Private reader feedback intake; target unchanged",
+      afterStatus: "submitted",
+    });
   });
 }
 export async function triageIntake(
@@ -528,16 +549,14 @@ export async function triageIntake(
       .update(correctionIntakes)
       .set({ status })
       .where(eq(correctionIntakes.id, id));
-    await tx
-      .insert(auditEvents)
-      .values({
-        entityId: id,
-        action: "intake_triaged",
-        actorId,
-        reason,
-        beforeStatus: old.status,
-        afterStatus: status,
-      });
+    await tx.insert(auditEvents).values({
+      entityId: id,
+      action: "intake_triaged",
+      actorId,
+      reason,
+      beforeStatus: old.status,
+      afterStatus: status,
+    });
   });
 }
 

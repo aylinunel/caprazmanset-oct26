@@ -6,7 +6,7 @@
 
 HTML rendering passes through a DOMPurify boundary. Former inline navigation handlers become delegated data actions. The runtime scopes selectors and styles below the React-owned public host; external links are restricted to credential-free HTTPS and marked as supplied. Malformed hash encoding is handled without an uncaught URIError. The legacy admin hash redirects to `/yonetim`; it does not open a client-only review desk.
 
-The full historical corpus remains client-indexed to preserve the original extensive views. Initial network/payload cost is explicitly retained. There is no claim that page size, advanced computations, or all imperative legacy functions have been fully modernized. Precomputed research results remain supplied historical outputs and are not relabelled as fresh AI analysis.
+The full historical corpus remains client-indexed to preserve the original extensive views. Initial network/payload cost is explicitly retained. The server encodes the public dataset once per distinct content and answers revalidations with `304` (`server/editorial/public-body.ts`, ADR-0001); browsers must still revalidate on every load, so an editorial change is never served stale from their cache. There is no claim that page size, advanced computations, or all imperative legacy functions have been fully modernized. Precomputed research results remain supplied historical outputs and are not relabelled as fresh AI analysis.
 
 ## Persistent editorial model
 

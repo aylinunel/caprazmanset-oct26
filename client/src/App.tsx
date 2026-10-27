@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { isLegacyAdminHash } from "./public/hash";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
@@ -10,11 +11,19 @@ function PublicWebsite() {
   useEffect(() => {
     let disposed = false;
     let cleanup: (() => void) | undefined;
+    // Start the ~1 MB dataset request while the renderer chunk downloads,
+    // instead of after it (they were fetched one after the other).
+    const dataset = isLegacyAdminHash(window.location.hash)
+      ? undefined
+      : window.fetch("/api/public/dataset", {
+          headers: { accept: "application/json" },
+        });
+    dataset?.catch(() => undefined); // bootstrap reports failures
     const mount = async () => {
       try {
         const { mountPublicWebsite } = await import("./public/bootstrap");
         if (disposed || !host.current) return;
-        const stop = await mountPublicWebsite(host.current);
+        const stop = await mountPublicWebsite(host.current, dataset);
         if (typeof stop === "function") {
           if (disposed) stop();
           else cleanup = stop;
