@@ -64,7 +64,7 @@ A readable real-rendered screenshot confirms the broad-search heading of 897 and
 
 ## Repository delivery constraint
 
-During the final save, GitHub was found to contain newer commits and the repository visibility was verified as **public** (`isPrivate: false`). The optimization was committed locally and merged with the newer upstream history without force-pushing or changing visibility. Public pushing requires explicit confirmation; until then the merged code and report remain available as a local source archive. No application publication was enabled.
+During the final save, GitHub was found to contain newer commits and the repository visibility was verified as **public** (`isPrivate: false`). The optimization was committed locally and merged with the newer upstream history without force-pushing or changing visibility. The user explicitly approved publishing this update to the public repository. Commit `207f78489aa3d4228c967640f2e90bd8356e1527` was pushed and its exact SHA verified on GitHub main. The existing Engineering checks workflow was triggered; CI success is not inferred from local test success. Application auto-publication remains disabled. The updated source archive includes the merged implementation and this delivery record.
 
 ## Attempt ledger
 

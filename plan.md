@@ -40,3 +40,5 @@ Apply the requested hybrid-search skill's measurement, bounded-result and releva
 ### Concurrent repository changes
 
 The final fetch revealed newer Engineering Team reliability fixes and a user-set public repository (`aylinunel/caprazmanset-oct26`, verified `isPrivate: false`). Preserve and merge that history, architecture diagram and offline-checks workflow without force-pushing or changing visibility. Recheck the merged application. The code can be delivered as a source archive immediately; publishing the optimization to the now-public main branch requires explicit confirmation. This does not authorize application deployment.
+
+The user subsequently explicitly approved the public push. The merged optimization was pushed and verified as GitHub main commit `207f78489aa3d4228c967640f2e90bd8356e1527`; application auto-publication remains disabled. The preserved Engineering checks workflow was triggered.
