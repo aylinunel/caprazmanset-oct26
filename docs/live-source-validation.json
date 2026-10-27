@@ -1,0 +1,727 @@
+{
+  "checked_at": "2026-10-27T20:42:53.991464+00:00",
+  "mode": "live",
+  "historical_counts_changed": false,
+  "sources": [
+    {
+      "source": "t24",
+      "name": "T24",
+      "checked_at": "2026-10-27T20:42:19.566399+00:00",
+      "status": "ok",
+      "found": 2,
+      "new": 2,
+      "methods": [
+        "html"
+      ],
+      "errors": [],
+      "attempts": [
+        {
+          "endpoint": "https://t24.com.tr/robots.txt",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://t24.com.tr/",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://t24.com.tr/dunya/israil-de-7-ekim-den-sonraki-ilk-secimler-sandik-cikis-anketleri-gelmeye-basladi-secmenler-muhalefete-oy-verdi-ama-netanyahu-nun-likud-u-onde,1355663",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://t24.com.tr/spor/ismail-kartalin-istifaya-giden-yolu-artik-psikolojim-kaldirmiyor-kendimi-de-motive-edemiyorum,1355664",
+          "status": 200,
+          "code": "ok"
+        }
+      ],
+      "last_success_at": "2026-10-27T20:42:24.492892+00:00",
+      "validation_errors": [],
+      "seconds": 4.93,
+      "sample": {
+        "url": "https://t24.com.tr/dunya/israil-de-7-ekim-den-sonraki-ilk-secimler-sandik-cikis-anketleri-gelmeye-basladi-secmenler-muhalefete-oy-verdi-ama-netanyahu-nun-likud-u-onde,1355663",
+        "published_at": "2026-10-27T19:12:00+00:00",
+        "method": "live/html"
+      }
+    },
+    {
+      "source": "tv100",
+      "name": "TV100",
+      "checked_at": "2026-10-27T20:42:19.568343+00:00",
+      "status": "ok",
+      "found": 2,
+      "new": 2,
+      "methods": [
+        "rss"
+      ],
+      "errors": [],
+      "attempts": [
+        {
+          "endpoint": "https://www.tv100.com/robots.txt",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.tv100.com/export/rss",
+          "status": 200,
+          "code": "ok"
+        }
+      ],
+      "last_success_at": "2026-10-27T20:42:23.934227+00:00",
+      "validation_errors": [],
+      "seconds": 4.37,
+      "sample": {
+        "url": "https://www.tv100.com/haberi-o-isim-getirdi-aziz-yildirim-ne-soyledi-ismail-kartalin-istifasinin-perde-arkasi-haber-876901",
+        "published_at": "2026-10-27T19:39:00+00:00",
+        "method": "live/rss"
+      }
+    },
+    {
+      "source": "akit",
+      "name": "Yeni Akit",
+      "checked_at": "2026-10-27T20:42:19.569155+00:00",
+      "status": "ok",
+      "found": 2,
+      "new": 2,
+      "methods": [
+        "html"
+      ],
+      "errors": [],
+      "attempts": [
+        {
+          "endpoint": "https://www.yeniakit.com.tr/robots.txt",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.yeniakit.com.tr/",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.yeniakit.com.tr/haber/iste-israilde-sandiktan-cikan-ilk-sonuclar-2030549.html",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.yeniakit.com.tr/haber/hazir-misiniz-kahkahaya-iste-bulent-arincin-objektif-dedigi-isim-2030548.html",
+          "status": 200,
+          "code": "ok"
+        }
+      ],
+      "last_success_at": "2026-10-27T20:42:27.284696+00:00",
+      "validation_errors": [],
+      "seconds": 7.72,
+      "sample": {
+        "url": "https://www.yeniakit.com.tr/haber/iste-israilde-sandiktan-cikan-ilk-sonuclar-2030549.html",
+        "published_at": "2026-10-27T20:21:00+00:00",
+        "method": "live/html"
+      }
+    },
+    {
+      "source": "artigercek",
+      "name": "Artı Gerçek",
+      "checked_at": "2026-10-27T20:42:23.936544+00:00",
+      "status": "ok",
+      "found": 2,
+      "new": 2,
+      "methods": [
+        "news-sitemap"
+      ],
+      "errors": [],
+      "attempts": [
+        {
+          "endpoint": "https://artigercek.com/robots.txt",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://artigercek.com/export/newsmap",
+          "status": 200,
+          "code": "ok"
+        }
+      ],
+      "last_success_at": "2026-10-27T20:42:28.325411+00:00",
+      "validation_errors": [],
+      "seconds": 4.39,
+      "sample": {
+        "url": "https://artigercek.com/gozden-kacmasin/istanbulun-en-havali-semtlerinden-biri-yasayanlar-kolay-kolay-ayrilmiyor-352104h",
+        "published_at": "2026-10-27T22:27:31+03:00",
+        "method": "live/news-sitemap"
+      }
+    },
+    {
+      "source": "dha",
+      "name": "Demirören Haber Ajansı",
+      "checked_at": "2026-10-27T20:42:24.499477+00:00",
+      "status": "ok",
+      "found": 2,
+      "new": 2,
+      "methods": [
+        "html"
+      ],
+      "errors": [],
+      "attempts": [
+        {
+          "endpoint": "https://www.dha.com.tr/robots.txt",
+          "status": 404,
+          "code": "http_error"
+        },
+        {
+          "endpoint": "https://www.dha.com.tr/",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.dha.com.tr/gundem/emekli-maaslarina-yeni-duzenleme-geliyor-2970617",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.dha.com.tr/gundem/aluminyum-fabrikasindaki-patlamanin-goruntuleri-ortaya-cikti-2970642",
+          "status": 200,
+          "code": "ok"
+        }
+      ],
+      "last_success_at": "2026-10-27T20:42:28.840723+00:00",
+      "validation_errors": [],
+      "seconds": 4.34,
+      "sample": {
+        "url": "https://www.dha.com.tr/gundem/emekli-maaslarina-yeni-duzenleme-geliyor-2970617",
+        "published_at": "2026-10-27T17:13:40+00:00",
+        "method": "live/html"
+      }
+    },
+    {
+      "source": "dunya",
+      "name": "Dünya",
+      "checked_at": "2026-10-27T20:42:27.286986+00:00",
+      "status": "ok",
+      "found": 2,
+      "new": 2,
+      "methods": [
+        "rss"
+      ],
+      "errors": [],
+      "attempts": [
+        {
+          "endpoint": "https://www.dunya.com/robots.txt",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.dunya.com/rss",
+          "status": 200,
+          "code": "ok"
+        }
+      ],
+      "last_success_at": "2026-10-27T20:42:33.833379+00:00",
+      "validation_errors": [],
+      "seconds": 6.55,
+      "sample": {
+        "url": "https://www.dunya.com/dunya/israilde-oy-verme-islemi-sona-erdi-netanyahu-geride-kaldi-haberi-845534",
+        "published_at": "2026-10-27T20:13:00+00:00",
+        "method": "live/rss"
+      }
+    },
+    {
+      "source": "ekonomim",
+      "name": "Ekonomim",
+      "checked_at": "2026-10-27T20:42:28.326922+00:00",
+      "status": "ok",
+      "found": 2,
+      "new": 2,
+      "methods": [
+        "rss"
+      ],
+      "errors": [],
+      "attempts": [
+        {
+          "endpoint": "https://www.ekonomim.com/robots.txt",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.ekonomim.com/export/rss",
+          "status": 200,
+          "code": "ok"
+        }
+      ],
+      "last_success_at": "2026-10-27T20:42:32.689445+00:00",
+      "validation_errors": [],
+      "seconds": 4.36,
+      "sample": {
+        "url": "https://www.ekonomim.com/dunya/israilde-sandiklar-kapandi-netanyahunun-partisi-birinci-rakibinin-blogu-onde-haberi-927441",
+        "published_at": "2026-10-27T20:05:00+00:00",
+        "method": "live/rss"
+      }
+    },
+    {
+      "source": "f5haber",
+      "name": "F5Haber",
+      "checked_at": "2026-10-27T20:42:28.842365+00:00",
+      "status": "ok",
+      "found": 2,
+      "new": 2,
+      "methods": [
+        "rss"
+      ],
+      "errors": [],
+      "attempts": [
+        {
+          "endpoint": "https://www.f5haber.com/robots.txt",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.f5haber.com/export/rss",
+          "status": 200,
+          "code": "ok"
+        }
+      ],
+      "last_success_at": "2026-10-27T20:42:32.974173+00:00",
+      "validation_errors": [],
+      "seconds": 4.13,
+      "sample": {
+        "url": "https://www.f5haber.com/gundem/bakan-ciftciden-siber-tehditlere-karsi-net-mesaj-taviz-vermeyecegiz-6992709",
+        "published_at": "2026-10-27T20:28:00+00:00",
+        "method": "live/rss"
+      }
+    },
+    {
+      "source": "gazetelerdebugun",
+      "name": "GazetelerdeBugün",
+      "checked_at": "2026-10-27T20:42:32.691743+00:00",
+      "status": "robots_unavailable",
+      "found": 0,
+      "new": 0,
+      "methods": [],
+      "errors": [],
+      "attempts": [
+        {
+          "endpoint": "https://www.gazetelerdebugun.com/robots.txt",
+          "status": 503,
+          "code": "rate_limited"
+        },
+        {
+          "endpoint": "https://www.gazetelerdebugun.com/robots.txt",
+          "status": 503,
+          "code": "robots_unavailable"
+        }
+      ],
+      "last_success_at": null,
+      "validation_errors": [],
+      "seconds": 3.72
+    },
+    {
+      "source": "haberglobal",
+      "name": "Haber Global",
+      "checked_at": "2026-10-27T20:42:32.976047+00:00",
+      "status": "ok",
+      "found": 2,
+      "new": 2,
+      "methods": [
+        "html"
+      ],
+      "errors": [],
+      "attempts": [
+        {
+          "endpoint": "https://haberglobal.com/robots.txt",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://haberglobal.com/",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://haberglobal.com/spor/fenerbahcede-yeni-hoca-adaylari-belirlendi-550723",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://haberglobal.com/gundem/toki-basvurusu-dolandiriciligina-5-ilde-operasyon-8-supheli-gozaltina-alindi-550722",
+          "status": 200,
+          "code": "ok"
+        }
+      ],
+      "last_success_at": "2026-10-27T20:42:40.885225+00:00",
+      "validation_errors": [],
+      "seconds": 7.91,
+      "sample": {
+        "url": "https://haberglobal.com/spor/fenerbahcede-yeni-hoca-adaylari-belirlendi-550723",
+        "published_at": "2026-10-27T18:40:00+00:00",
+        "method": "live/html"
+      }
+    },
+    {
+      "source": "instacp",
+      "name": "Instacp",
+      "checked_at": "2026-10-27T20:42:33.834909+00:00",
+      "status": "robots_unavailable",
+      "found": 0,
+      "new": 0,
+      "methods": [],
+      "errors": [],
+      "attempts": [
+        {
+          "endpoint": "https://www.instacp.com/robots.txt",
+          "status": 503,
+          "code": "rate_limited"
+        },
+        {
+          "endpoint": "https://www.instacp.com/robots.txt",
+          "status": 503,
+          "code": "robots_unavailable"
+        }
+      ],
+      "last_success_at": null,
+      "validation_errors": [],
+      "seconds": 2.83
+    },
+    {
+      "source": "internethaber",
+      "name": "İnternet Haber",
+      "checked_at": "2026-10-27T20:42:36.413983+00:00",
+      "status": "ok",
+      "found": 2,
+      "new": 2,
+      "methods": [
+        "html"
+      ],
+      "errors": [],
+      "attempts": [
+        {
+          "endpoint": "https://www.internethaber.com/robots.txt",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.internethaber.com/",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.internethaber.com/aziz-yildirim-tesis-cikisinda-kaza-yapti-video-galerisi-2466018.htm",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.internethaber.com/goztepe-macinda-takimin-basinda-olacak-isim-belli-oldu-2466012h.htm",
+          "status": 200,
+          "code": "ok"
+        }
+      ],
+      "last_success_at": "2026-10-27T20:42:41.797952+00:00",
+      "validation_errors": [],
+      "seconds": 5.39,
+      "sample": {
+        "url": "https://www.internethaber.com/aziz-yildirim-tesis-cikisinda-kaza-yapti-video-galerisi-2466018.htm",
+        "published_at": "2026-10-27T19:40:00+00:00",
+        "method": "live/html"
+      }
+    },
+    {
+      "source": "memurlar",
+      "name": "Memurlar.net",
+      "checked_at": "2026-10-27T20:42:36.669586+00:00",
+      "status": "ok",
+      "found": 2,
+      "new": 2,
+      "methods": [
+        "html"
+      ],
+      "errors": [],
+      "attempts": [
+        {
+          "endpoint": "https://www.memurlar.net/robots.txt",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.memurlar.net/",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.memurlar.net/haber/1182265/e-devlet-e-asayis-ihbar-takip-sistemi-geliyor.html",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.memurlar.net/haber/1182326/israil-seciminde-eisenkot-bloku-onde-arap-partiler-rekor-oy-aldi.html",
+          "status": 200,
+          "code": "ok"
+        }
+      ],
+      "last_success_at": "2026-10-27T20:42:41.550529+00:00",
+      "validation_errors": [],
+      "seconds": 4.88,
+      "sample": {
+        "url": "https://www.memurlar.net/haber/1182265/e-devlet-e-asayis-ihbar-takip-sistemi-geliyor.html",
+        "published_at": "2026-10-27T20:35:00+00:00",
+        "method": "live/html"
+      }
+    },
+    {
+      "source": "nefes",
+      "name": "Nefes",
+      "checked_at": "2026-10-27T20:42:40.887486+00:00",
+      "status": "ok",
+      "found": 2,
+      "new": 2,
+      "methods": [
+        "html"
+      ],
+      "errors": [],
+      "attempts": [
+        {
+          "endpoint": "https://www.nefes.com.tr/robots.txt",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.nefes.com.tr/",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.nefes.com.tr/aziz-yildirim-tesis-cikisinda-kaza-yapti-o-anlar-canli-yayina-yansidi-160996",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.nefes.com.tr/israilden-ilk-sonuclar-geldi-160994",
+          "status": 200,
+          "code": "ok"
+        }
+      ],
+      "last_success_at": "2026-10-27T20:42:48.770590+00:00",
+      "validation_errors": [],
+      "seconds": 7.88,
+      "sample": {
+        "url": "https://www.nefes.com.tr/aziz-yildirim-tesis-cikisinda-kaza-yapti-o-anlar-canli-yayina-yansidi-160996",
+        "published_at": "2026-10-27T20:26:25+00:00",
+        "method": "live/html"
+      }
+    },
+    {
+      "source": "odatv",
+      "name": "Oda TV",
+      "checked_at": "2026-10-27T20:42:41.552409+00:00",
+      "status": "ok",
+      "found": 2,
+      "new": 2,
+      "methods": [
+        "rss"
+      ],
+      "errors": [],
+      "attempts": [
+        {
+          "endpoint": "https://www.odatv.com/robots.txt",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.odatv.com/export/rss",
+          "status": 200,
+          "code": "ok"
+        }
+      ],
+      "last_success_at": "2026-10-27T20:42:45.392548+00:00",
+      "validation_errors": [],
+      "seconds": 3.84,
+      "sample": {
+        "url": "https://www.odatv.com/guncel/israil-2026-secimlerinde-son-durum-netanyahu-cogunlugu-saglayamadi-120168557",
+        "published_at": "2026-10-27T20:24:16+00:00",
+        "method": "live/rss"
+      }
+    },
+    {
+      "source": "oksijen",
+      "name": "Oksijen",
+      "checked_at": "2026-10-27T20:42:41.799346+00:00",
+      "status": "ok",
+      "found": 2,
+      "new": 2,
+      "methods": [
+        "html"
+      ],
+      "errors": [],
+      "attempts": [
+        {
+          "endpoint": "https://gazeteoksijen.com/robots.txt",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://gazeteoksijen.com/",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://gazeteoksijen.com/turkiye/istanbulda-dort-belediye-daha-yeni-partiye-katildi-294100",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://gazeteoksijen.com/dunya/trump-secimler-durust-yapilirsa-sonuclara-saygi-duyarim-294103",
+          "status": 200,
+          "code": "ok"
+        }
+      ],
+      "last_success_at": "2026-10-27T20:42:46.754949+00:00",
+      "validation_errors": [],
+      "seconds": 4.96,
+      "sample": {
+        "url": "https://gazeteoksijen.com/turkiye/istanbulda-dort-belediye-daha-yeni-partiye-katildi-294100",
+        "published_at": "2026-10-27T15:21:00+00:00",
+        "method": "live/html"
+      }
+    },
+    {
+      "source": "posta",
+      "name": "Posta",
+      "checked_at": "2026-10-27T20:42:45.393763+00:00",
+      "status": "ok",
+      "found": 2,
+      "new": 2,
+      "methods": [
+        "html"
+      ],
+      "errors": [],
+      "attempts": [
+        {
+          "endpoint": "https://www.posta.com.tr/robots.txt",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.posta.com.tr/",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.posta.com.tr/dunya/israilde-iktidar-icin-yarisan-iki-blok-da-hukumet-kuracak-sayiya-erisemedi-3057469",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.posta.com.tr/dunya/abd-federal-secim-kuruluna-siber-saldiri-3057468",
+          "status": 200,
+          "code": "ok"
+        }
+      ],
+      "last_success_at": "2026-10-27T20:42:50.113942+00:00",
+      "validation_errors": [],
+      "seconds": 4.72,
+      "sample": {
+        "url": "https://www.posta.com.tr/dunya/israilde-iktidar-icin-yarisan-iki-blok-da-hukumet-kuracak-sayiya-erisemedi-3057469",
+        "published_at": "2026-10-27T20:37:00+00:00",
+        "method": "live/html"
+      }
+    },
+    {
+      "source": "sondakika",
+      "name": "Sondakika.com",
+      "checked_at": "2026-10-27T20:42:46.756387+00:00",
+      "status": "ok",
+      "found": 2,
+      "new": 2,
+      "methods": [
+        "news-sitemap"
+      ],
+      "errors": [],
+      "attempts": [
+        {
+          "endpoint": "https://www.sondakika.com/robots.txt",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.sondakika.com/sitemaps/sitemap_google_news.aspx",
+          "status": 200,
+          "code": "ok"
+        }
+      ],
+      "last_success_at": "2026-10-27T20:42:53.988999+00:00",
+      "validation_errors": [],
+      "seconds": 7.23,
+      "sample": {
+        "url": "https://www.sondakika.com/guncel/haber-trump-venezuela-nin-abd-nin-51-eyaleti-olabilecegi-20372189/",
+        "published_at": "2026-10-27T20:39:22+03:00",
+        "method": "live/news-sitemap"
+      }
+    },
+    {
+      "source": "vatan",
+      "name": "Vatan",
+      "checked_at": "2026-10-27T20:42:48.772127+00:00",
+      "status": "ok",
+      "found": 2,
+      "new": 2,
+      "methods": [
+        "html"
+      ],
+      "errors": [],
+      "attempts": [
+        {
+          "endpoint": "https://www.gazetevatan.com/robots.txt",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.gazetevatan.com/",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.gazetevatan.com/gundem/nisan-toreninde-gelin-ve-damat-tarafi-arasinda-tekmeli-yumruklu-kavga-cikti-2420185",
+          "status": 200,
+          "code": "ok"
+        },
+        {
+          "endpoint": "https://www.gazetevatan.com/gundem/iki-arac-kafa-kafaya-carpistigi-kazada-5-kisi-yaralandi-2420183",
+          "status": 200,
+          "code": "ok"
+        }
+      ],
+      "last_success_at": "2026-10-27T20:42:53.820758+00:00",
+      "validation_errors": [],
+      "seconds": 5.05,
+      "sample": {
+        "url": "https://www.gazetevatan.com/gundem/nisan-toreninde-gelin-ve-damat-tarafi-arasinda-tekmeli-yumruklu-kavga-cikti-2420185",
+        "published_at": "2026-10-27T20:32:02+00:00",
+        "method": "live/html"
+      }
+    }
+  ],
+  "delivery": {
+    "status": "disabled",
+    "pending": 34
+  },
+  "validation_command": "python scraper/live.py --proxy-dns --limit 2 --site-timeout 40 --db work/all-sources.sqlite3 --status work/all-sources-health.json",
+  "process_exit": 3,
+  "record_count": 34,
+  "authenticated_import_performed": false,
+  "dns_diagnostics": [
+    {
+      "host": "instacp.com",
+      "resolver": "cloudflare-dns.com",
+      "checked_at": "2026-10-27T20:47:05.387679+00:00",
+      "status": 3,
+      "answers": [],
+      "meaning": "NXDOMAIN"
+    },
+    {
+      "host": "gazetelerdebugun.com",
+      "resolver": "cloudflare-dns.com",
+      "checked_at": "2026-10-27T20:47:11.435688+00:00",
+      "status": 3,
+      "answers": [],
+      "meaning": "NXDOMAIN"
+    }
+  ]
+}

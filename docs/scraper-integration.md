@@ -10,6 +10,8 @@ No `LICENSE`, `COPYING`, or `NOTICE` file exists in that pinned upstream Git tre
 
 ## Important collection limitation
 
+For new near-real-time collection, use [`live.py`](../scraper/live.py) and the [current source-resolution guide](live-source-collection.md). It adds guarded periodic discovery without changing the pinned upstream code, registry, or historical counts. The limitations below describe the older backfill integration and the unguarded upstream command.
+
 The upstream live command `news.py` performs bounded HTTP collection but **does not read or apply `robots.txt`**. It is not the project entrypoint.
 
 The provided [`scraper/collect.py`](../scraper/collect.py) always invokes upstream `backfill.py` for one explicitly selected publisher/day. `backfill.py` checks robots rules for sitemap and article requests, blocks an origin when robots cannot be retrieved (except 404/410), obeys `can_fetch`, and incorporates publisher crawl-delay/request-rate information. The wrapper also requires `--only`, fixes collection to one Türkiye calendar day, uses one concurrent request per publisher, applies a 0.6-second minimum delay, limits sitemaps/pages/time, and has no scheduler or repeat loop.
@@ -65,7 +67,7 @@ python -m pip install -r scraper/upstream/requirements.lock
 
 4. **Review before publication:** imported articles are expected to enter as `draft` records with `provided` verification. Import does not publish, score, classify, or otherwise transform an article into an editorial claim. An administrator must inspect provenance/evidence and use the explicit protected publication action before a public record exists.
 
-There is no persistent service, scheduled polling, or GitHub Actions workflow in this integration.
+An explicit near-real-time polling command is now available through `live.py`. No persistent service or collection schedule is installed; GitHub Actions runs offline checks only.
 
 ## Adapter contract and safeguards
 

@@ -42,5 +42,5 @@ jobs:
       - run: python -m pip install -r scraper/upstream/requirements.lock
       - name: Run offline integration and upstream checks
         run: |
-          python -m unittest -v scraper/tests/test_import_news.py scraper/tests/test_collect.py
+          python -m unittest discover -s scraper/tests -p 'test_*.py' -v
           python -m unittest discover -s scraper/upstream -p 'test_*.py' -v

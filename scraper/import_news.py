@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 from email.message import Message
+from http.client import HTTPException
 import ipaddress
 import json
 import os
@@ -386,6 +387,24 @@ def response_status(response: Any) -> int:
     return status
 
 
+def validate_acknowledgement(response: Any, run_id: str, count: int) -> None:
+    """A successful HTTP transport alone does not prove draft persistence."""
+    try:
+        raw = response.read(65537)
+        if len(raw) > 65536:
+            raise ApiError("API acknowledgement exceeds the size limit")
+        acknowledgement = json.loads(raw)
+    except (AttributeError, ValueError, TypeError, UnicodeError, HTTPException, OSError) as exc:
+        raise ApiError("API did not return a valid draft acknowledgement") from exc
+    if not isinstance(acknowledgement, dict):
+        raise ApiError("API did not return a valid draft acknowledgement")
+    counts = [acknowledgement.get(key) for key in ("accepted", "duplicates", "rejected")]
+    if (acknowledgement.get("status") != "draft" or acknowledgement.get("runId") != run_id
+            or any(type(value) is not int or value < 0 for value in counts)
+            or counts[2] != 0 or counts[0] + counts[1] != count):
+        raise ApiError("API draft acknowledgement does not match the submitted batch")
+
+
 def post_batch(endpoint: str, token: str, run_id: str, upstream_commit: str,
                batch: list[AcceptedRecord], *, opener: Callable[..., Any],
                sleep: Callable[[float], None]) -> None:
@@ -412,10 +431,15 @@ def post_batch(endpoint: str, token: str, run_id: str, upstream_commit: str,
             response = opener(request, timeout=REQUEST_TIMEOUT_SECONDS)
             try:
                 status = response_status(response)
+                if 200 <= status < 300:
+                    validate_acknowledgement(response, run_id, len(batch))
             finally:
                 close = getattr(response, "close", None)
                 if callable(close):
-                    close()
+                    try:
+                        close()
+                    except (OSError, HTTPException):
+                        pass
             if 200 <= status < 300:
                 return
             if status in RETRYABLE_STATUS:
