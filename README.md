@@ -164,7 +164,7 @@ The extractor `scripts/extract-public.mjs` reads the owner-supplied original HTM
 
 The `Engineering checks` GitHub Actions workflow runs the application check, tests and build with Node.js 22 and pnpm 10.18.0, plus the offline Python integration and upstream suites, on pull requests and pushes to `main`. It does not publish packages, collect news, deploy, or access the managed database.
 
-The full compatibility dataset is still downloaded and indexed client-side for feature parity. The server caches its assembled view briefly and invalidates it after editorial changes. This remains the principal performance limit; replacing legacy views with paginated endpoint-driven components is a future migration rather than an unreported completed feature.
+The full compatibility dataset is still downloaded and indexed client-side for feature parity. The server caches its assembled view briefly and invalidates it after editorial changes. The response is serialized and compressed once per distinct content (Brotli or gzip) and carries a content-hash `ETag` with `Cache-Control: no-cache`, so a returning browser revalidates and gets `304` when nothing was published; the page shell starts the dataset request in parallel with the renderer chunk (ADR-0001). This remains the principal performance limit; replacing legacy views with paginated endpoint-driven components is a future migration rather than an unreported completed feature.
 
 ## Private reader feedback
 

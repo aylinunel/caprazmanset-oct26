@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MySqlDialect } from "drizzle-orm/mysql-core";
 import {
+  auditEvents,
   datasetManifests,
   editorialRecords,
   type EditorialRecord,
@@ -9,6 +10,7 @@ import {
 const mocks = vi.hoisted(() => ({ getDb: vi.fn() }));
 vi.mock("../db", () => ({ getDb: mocks.getDb }));
 import {
+  importCollectorBatch,
   invalidateDataset,
   publicDataset,
   saveRecord,
@@ -186,5 +188,100 @@ describe("editorial repository invariants", () => {
       message: expect.stringContaining("source must be published"),
     });
     expect(update).not.toHaveBeenCalled();
+  });
+
+  describe("collector batch import", () => {
+    const article = (n: number) => ({
+      source: "birgun",
+      source_name: "BirGün",
+      url: `https://www.birgun.net/haber/${n}`,
+      title: `Başlık ${n}`,
+      published_at: "2026-10-20T10:00:00+03:00",
+      fetched_at: "2026-10-27T10:00:00+00:00",
+      summary: "",
+      method: "sitemap",
+    });
+    const batch = (...ns: number[]) => ({
+      schemaVersion: 1 as const,
+      runId: "run-1",
+      upstreamCommit: "a".repeat(40),
+      articles: ns.map(article),
+    });
+    function fakeDb(existing: string[], raced: string[] = []) {
+      const statements: string[] = [];
+      const stored = new Map<string, string>();
+      const tx = {
+        select: () => ({
+          from: () => ({
+            where: async () => {
+              statements.push("select");
+              return [
+                ...existing.map(id => ({ id, note: "other run" })),
+                ...[...stored].map(([id, note]) => ({ id, note })),
+              ];
+            },
+          }),
+        }),
+        insert: (table: unknown) => ({
+          ignore: () => ({
+            values: async (rows: { id: string; provenanceNote: string }[]) => {
+              statements.push(`insert records x${rows.length}`);
+              let affected = 0;
+              for (const row of rows) {
+                const other = raced.find(r => row.id.endsWith(r));
+                if (other) stored.set(row.id, "concurrent run");
+                else {
+                  stored.set(row.id, row.provenanceNote);
+                  affected++;
+                }
+              }
+              return [{ affectedRows: affected }];
+            },
+          }),
+          values: async (rows: unknown[]) => {
+            statements.push(
+              `insert ${table === auditEvents ? "audit" : "other"} x${rows.length}`
+            );
+          },
+        }),
+      };
+      mocks.getDb.mockResolvedValue({
+        transaction: async (callback: (value: typeof tx) => unknown) =>
+          callback(tx),
+      });
+      return statements;
+    }
+    const idOf = async (n: number) => {
+      const { createHash } = await import("node:crypto");
+      return `c-${createHash("sha256").update(`birgun\nhttps://www.birgun.net/haber/${n}`).digest("hex").slice(0, 40)}`;
+    };
+
+    it("writes a batch in three statements and counts duplicates", async () => {
+      const statements = fakeDb([await idOf(2)]);
+      const result = await importCollectorBatch(batch(1, 2, 3, 3), 7);
+      expect(result).toMatchObject({
+        accepted: 2,
+        duplicates: 2,
+        status: "draft",
+      });
+      expect(statements).toEqual([
+        "select",
+        "insert records x2",
+        "insert audit x2",
+      ]);
+    });
+
+    it("audits only rows this batch created when a concurrent import races it", async () => {
+      const raced = (await idOf(2)).slice(-6);
+      const statements = fakeDb([], [raced]);
+      const result = await importCollectorBatch(batch(1, 2), 7);
+      expect(result).toMatchObject({ accepted: 1, duplicates: 1 });
+      expect(statements).toEqual([
+        "select",
+        "insert records x2",
+        "select",
+        "insert audit x1",
+      ]);
+    });
   });
 });

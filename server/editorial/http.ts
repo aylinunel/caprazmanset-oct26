@@ -1,5 +1,4 @@
 import type { Express, Response } from "express";
-import compression from "compression";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
@@ -9,6 +8,7 @@ import {
   slugSchema,
 } from "../../shared/editorial";
 import { RateLimiter } from "./rate-limit";
+import { encodePublicBody, negotiate, notModified } from "./public-body";
 import {
   collectorActor,
   findRecord,
@@ -61,11 +61,23 @@ function failure(res: Response, error: unknown) {
   return res.status(500).json({ error: "Editorial service unavailable" });
 }
 export function registerEditorialHttp(app: Express) {
-  app.get("/api/public/dataset", compression(), async (_req, res) => {
+  app.get("/api/public/dataset", async (req, res) => {
     try {
-      res.set("Cache-Control", "no-store").json(await publicDataset());
+      const body = await encodePublicBody(await publicDataset());
+      // Browsers may keep the copy but must revalidate it every time, so an
+      // editorial change is never served stale; unchanged data costs a 304.
+      res.set({
+        "Cache-Control": "no-cache",
+        ETag: body.etag,
+        Vary: "Accept-Encoding",
+      });
+      if (notModified(req.headers["if-none-match"], body.etag))
+        return res.status(304).end();
+      const encoding = negotiate(req.headers["accept-encoding"]);
+      if (encoding !== "identity") res.set("Content-Encoding", encoding);
+      return res.type("application/json").send(body[encoding]);
     } catch (error) {
-      failure(res, error);
+      return failure(res, error);
     }
   });
   app.post("/api/editorial/corrections", async (req, res) => {

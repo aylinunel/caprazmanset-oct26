@@ -29,6 +29,13 @@ function injectPublicCss(document: Document): HTMLStyleElement {
   return style;
 }
 
+/** The dataset request, also started by the page shell in parallel with this chunk. */
+export function fetchPublicDataset(view: Window): Promise<Response> {
+  return view.fetch("/api/public/dataset", {
+    headers: { accept: "application/json" },
+  });
+}
+
 function isPublicDataset(value: unknown): value is Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const data = value as Record<string, unknown>;
@@ -47,7 +54,8 @@ function isPublicDataset(value: unknown): value is Record<string, unknown> {
  * beneath host until the returned cleanup is called.
  */
 export async function mountPublicWebsite(
-  host: HTMLElement
+  host: HTMLElement,
+  prefetched?: Promise<Response>
 ): Promise<() => void> {
   const view = host.ownerDocument.defaultView;
   if (!view) {
@@ -68,9 +76,7 @@ export async function mountPublicWebsite(
   let response: Response;
   let data: unknown;
   try {
-    response = await view.fetch("/api/public/dataset", {
-      headers: { accept: "application/json" },
-    });
+    response = await (prefetched ?? fetchPublicDataset(view));
     if (!response.ok) throw new Error(`dataset-${response.status}`);
     data = await response.json();
   } catch {
