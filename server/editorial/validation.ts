@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { httpsUrl, slugSchema } from "../../shared/editorial";
 
+export const analysisKeys = ["P", "G", "ADV"] as const;
+
 const boundedText = z.string().max(20000);
 const base = z.object({}).catchall(z.unknown());
 export const payloadSchemas = {
@@ -31,7 +33,7 @@ export const payloadSchemas = {
     tr: z.string().min(1).max(200),
     df: boundedText.optional(),
   }),
-  analysis: base,
+  analysis: base.extend({ key: z.enum(analysisKeys), data: z.unknown() }),
 };
 
 export function validatePayload(
@@ -41,15 +43,22 @@ export function validatePayload(
 ) {
   const result = payloadSchemas[kind].parse(input);
   const payloadId =
-    kind === "source" ? result.s : kind === "bias" ? result.k : result.i;
+    kind === "source"
+      ? result.s
+      : kind === "bias"
+        ? result.k
+        : kind === "analysis"
+          ? result.key
+          : result.i;
   const stableId =
     kind === "source"
       ? `source-${payloadId}`
       : kind === "bias"
         ? `bias-${payloadId}`
-        : payloadId;
-  if (kind !== "analysis" && stableId !== id)
-    throw new Error("Payload identity cannot change");
+        : kind === "analysis"
+          ? `analysis-${payloadId}`
+          : payloadId;
+  if (stableId !== id) throw new Error("Payload identity cannot change");
   // This compatibility renderer supports only plain data, not executable HTML.
   const scan = (value: unknown): void => {
     if (

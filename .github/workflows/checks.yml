@@ -1,0 +1,46 @@
+name: Engineering checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  application:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Activate the pinned package manager
+        run: corepack enable && corepack prepare pnpm@10.18.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: pnpm test
+      - run: pnpm build
+
+  scraper:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scraper/upstream/requirements.lock
+      - run: python -m pip install -r scraper/upstream/requirements.lock
+      - name: Run offline integration and upstream checks
+        run: |
+          python -m unittest -v scraper/tests/test_import_news.py scraper/tests/test_collect.py
+          python -m unittest discover -s scraper/upstream -p 'test_*.py' -v

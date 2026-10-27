@@ -1,6 +1,6 @@
 # Çapraz Manşet
 
-Private repository: [aylinunel/caprazmanset-oct26](https://github.com/aylinunel/caprazmanset-oct26). The main branch and Manus repository connection were verified on 2026-10-27.
+Repository: [aylinunel/caprazmanset-oct26](https://github.com/aylinunel/caprazmanset-oct26). GitHub reports this repository as **public** as of the engineering review on 2026-10-27. Repository visibility does not deploy the application or provision its database and authentication.
 
 Source-preserving refactor of the supplied Çapraz Manşet 3.0 HTML, with a protected Turkish editorial desk and the owner's existing [Turkish News Scraper](https://github.com/aylinunel/turkish-news-scraper) integrated at `fa827a410c532e273173abfa36e29090100c0dd6`.
 
@@ -40,7 +40,7 @@ python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install -r scraper/upstream/requirements.lock
 python scraper/collect.py --only birgun --output work/news.jsonl --db work/news.sqlite3 --status work/status.json
-python scraper/import_news.py --input work/news.jsonl --dry-run
+python scraper/import_news.py --input work/news.jsonl --endpoint https://YOUR_SITE --run-id collection_001 --dry-run
 ```
 
 The safe entrypoint uses the upstream robots-aware backfill implementation for one Türkiye calendar day and exactly one explicitly selected publisher per run, with bounded pages, sitemap count, timeout, concurrency and request spacing. The upstream live poller does not enforce robots rules and is **not** the default integration entrypoint. Neither command is an archive-completeness guarantee or access-control bypass. Full extracted bodies may stay in the local upstream SQLite file when collection is intentionally run; the integration does not send bodies to the website.
@@ -71,6 +71,8 @@ python -m unittest discover -s scraper/upstream -p 'test_*.py' -v
 
 The extractor `scripts/extract-public.mjs` reads the owner-supplied original HTML and reproduces the historical JSON, original SVG assets, analysis module and feature modules. See [public migration](docs/public-migration.md) for its arguments and behavior-preservation tests. The original uploaded HTML is not required to run the repository; extracted source/data are committed. The server import takes `data/original-dataset.json` as its default input.
 
+The `Engineering checks` GitHub Actions workflow runs the application check, tests and build with Node.js 22 and pnpm 10.18.0, plus the offline Python integration and upstream suites, on pull requests and pushes to `main`. It does not publish packages, collect news, deploy, or access the managed database.
+
 The full compatibility dataset is still downloaded and indexed client-side for feature parity. The server caches its assembled view briefly and invalidates it after editorial changes. This remains the principal performance limit; replacing legacy views with paginated endpoint-driven components is a future migration rather than an unreported completed feature.
 
 ## Private reader feedback
@@ -81,7 +83,7 @@ This is a basic private intake/manual-review queue, **not** a full independent a
 
 ## Reviews, deployment and licenses
 
-The [original code review](docs/original-code-review.md) records the source artifact's problems and strengths. The [release review](docs/release-review.md), [validation record](docs/validation.md) and architecture notes document resolved controls and remaining limits. The pre-remediation implementation review is retained as a dated record, not the final release verdict. No public deployment, continuous collection, or external automation is enabled by this repository export. Saving a version and publishing it are separate actions.
+The [original code review](docs/original-code-review.md) records the source artifact's problems and strengths. The [release review](docs/release-review.md), [validation record](docs/validation.md) and architecture notes document the original handoff. The [Engineering Team review](docs/engineering-review-2026-10-27.md) records the subsequent fixes and current local checks. Earlier reviews remain dated records. GitHub Actions runs code checks; public deployment and continuous collection remain separate actions.
 
-This repository is private by default. The upstream scraper at the recorded commit contains no LICENSE/COPYING/NOTICE file; no upstream license has been invented. Supplied content and branding remain the owner's material. Do not publish or redistribute the copied source/data without resolving the applicable permissions. Dependency licenses retain their own terms.
+GitHub currently exposes this repository publicly; earlier handoff documents describe its intended private delivery. The upstream scraper at the recorded commit contains no LICENSE/COPYING/NOTICE file; no upstream license has been invented. Supplied content and branding remain the owner's material. Public visibility does not grant redistribution permission. Resolve applicable permissions before further redistribution. Dependency licenses retain their own terms.
 [![Architecture diagram](https://gitdiagram.com/diagram-badge.svg)](https://gitdiagram.com/aylinunel/caprazmanset-oct26?utm_source=readme&utm_medium=badge)

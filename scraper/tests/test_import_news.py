@@ -76,6 +76,45 @@ class ImportNewsTests(unittest.TestCase):
         self.assertNotIn("text", article)
         self.assertEqual(len(import_news.load_registry()), 53)
 
+    def test_server_string_limits_use_utf16_and_reject_unpaired_surrogates(self):
+        registry = import_news.load_registry()
+        for field, maximum in (("title", 1000), ("summary", 5000), ("method", 100), ("published_at", 100)):
+            with self.subTest(field=field):
+                boundary = "😀" * (maximum // 2)
+                normalized = import_news.normalize_record(self.article(**{field: boundary}), registry)
+                self.assertEqual(normalized[field], boundary)
+                with self.assertRaises(import_news.ValidationError):
+                    import_news.normalize_record(self.article(**{field: boundary + "a"}), registry)
+                with self.assertRaises(import_news.ValidationError):
+                    import_news.normalize_record(self.article(**{field: "bad\ud800"}), registry)
+
+    def test_overlong_url_is_rejected_locally_without_poisoning_valid_batch(self):
+        prefix = "https://www.hurriyet.com.tr/"
+        boundary = prefix + "a" * (2048 - len(prefix))
+        path = self.write_jsonl([self.article(url=boundary), self.article(url=boundary + "a"), self.article(2)])
+        calls = []
+
+        def opener(request, timeout):
+            calls.append(json.loads(request.data.decode("utf-8")))
+            return FakeResponse()
+
+        output = io.StringIO()
+        result = import_news.execute(self.args(path), environ={"CAPRAZ_IMPORT_TOKEN": "not-logged"},
+                                     opener=opener, stream=output)
+        self.assertEqual(result, 1)
+        self.assertEqual(len(calls), 1)
+        self.assertEqual([article["url"] for article in calls[0]["articles"]], [boundary, self.article(2)["url"]])
+        self.assertIn("line 2: url exceeds 2048 characters", output.getvalue())
+        self.assertIn("accepted=2 skipped=0 rejected=1", output.getvalue())
+
+    def test_unpaired_surrogate_is_a_line_rejection_not_an_encoding_crash(self):
+        rows = [json.dumps(self.article(title="bad\ud800")),
+                json.dumps(self.article(url="https://www.hurriyet.com.tr/bad\ud800")), self.article(3)]
+        path = self.write_jsonl(rows)
+        records, report = import_news.read_jsonl(path, import_news.load_registry())
+        self.assertEqual((len(records), report.rejected), (1, 2))
+        self.assertEqual(records[0].line, 3)
+
     def test_rejects_source_and_url_injection_and_bad_fetched_date(self):
         rows = [
             self.article(source="not-in-registry"),
