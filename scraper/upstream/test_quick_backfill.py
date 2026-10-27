@@ -1,3 +1,4 @@
+import asyncio
 import contextlib
 import io
 import json
@@ -30,7 +31,7 @@ class QuickBackfillTests(unittest.IsolatedAsyncioTestCase):
         base.update(kw)
         return SimpleNamespace(**base)
 
-    async def run_site(self, args):
+    async def run_site(self, args, latency=0):
         # Three days, five gündem stories a day, plus sport stories that must be skipped.
         entries, pages = [], {}
         for d in (1, 2, 3):
@@ -43,11 +44,19 @@ class QuickBackfillTests(unittest.IsolatedAsyncioTestCase):
         maps = {'/robots.txt': f'Sitemap: {BASE}/sitemap.xml\n'.encode(),
                 '/sitemap.xml': ('<urlset>' + ''.join(entries) + '</urlset>').encode()}
         maps.update(pages)
-        hits = []
+        hits, inflight, self.peak = [], [0], 0
         async def fetch(_c, _s, url, cache=False):
             path = url.removeprefix(BASE)
             hits.append(path)
-            return (maps[path], url) if path in maps else None
+            page = path.startswith('/gundem/')  # story pages only, not robots or sitemaps
+            inflight[0] += page
+            self.peak = max(self.peak, inflight[0])
+            try:
+                if latency:
+                    await asyncio.sleep(latency)
+                return (maps[path], url) if path in maps else None
+            finally:
+                inflight[0] -= page
         out = io.StringIO()
         with patch.object(backfill.Backfill, 'fetch', fetch), contextlib.redirect_stdout(out):
             code = await backfill.Backfill(args).run([SOURCE])
@@ -70,6 +79,57 @@ class QuickBackfillTests(unittest.IsolatedAsyncioTestCase):
         _, rows, status, _ = await self.run_site(self.args(per_day=3))
         self.assertEqual(len(rows), 3)
         self.assertEqual(status['days_full'], 3)
+
+    async def test_quota_requests_overlap_but_never_overfetch(self):
+        # Quota runs used to fetch one page at a time. They now use the per-site concurrency
+        # with per-day reservations: requests overlap, and a filled day is never overfetched.
+        code, rows, status, hits = await self.run_site(self.args(), latency=0.02)
+        self.assertEqual(self.peak, 2, 'two story requests overlap (per-site concurrency)')
+        self.assertEqual(sum(h.startswith('/gundem/') for h in hits), 6, 'reservations prevent overfetching')
+        self.assertEqual(len(rows), 6)
+        self.assertEqual(status['days_full'], 3)
+
+    async def test_stale_child_sitemaps_are_pruned(self):
+        index = ('<sitemapindex>'
+                 f'<sitemap><loc>{BASE}/sitemap-a.xml</loc><lastmod>2026-07-01</lastmod></sitemap>'
+                 f'<sitemap><loc>{BASE}/sitemap-b.xml</loc><lastmod>2026-09-02</lastmod></sitemap>'
+                 f'<sitemap><loc>{BASE}/sitemap-c.xml</loc></sitemap>'
+                 f'<sitemap><loc>{BASE}/sitemap-2026-09.xml</loc><lastmod>2026-07-01</lastmod></sitemap>'
+                 '</sitemapindex>').encode()
+        empty = b'<urlset></urlset>'
+        maps = {'/robots.txt': f'Sitemap: {BASE}/sitemap.xml\n'.encode(), '/sitemap.xml': index,
+                '/sitemap-a.xml': empty, '/sitemap-b.xml': empty, '/sitemap-c.xml': empty, '/sitemap-2026-09.xml': empty}
+        hits = []
+
+        async def fetch(_c, _s, url, cache=False):
+            path = url.removeprefix(BASE)
+            hits.append(path)
+            return (maps[path], url) if path in maps else None
+        args = self.args()
+        with patch.object(backfill.Backfill, 'fetch', fetch), contextlib.redirect_stdout(io.StringIO()):
+            await backfill.Backfill(args).run([SOURCE])
+        status = json.loads(args.status.read_text())['sources'][0]
+        self.assertNotIn('/sitemap-a.xml', hits, 'last modified before the window: cannot hold window stories')
+        self.assertIn('/sitemap-b.xml', hits)
+        self.assertIn('/sitemap-c.xml', hits, 'no lastmod: kept')
+        self.assertIn('/sitemap-2026-09.xml', hits, 'URL names a window month: kept whatever its lastmod')
+        self.assertEqual(status['sitemaps_pruned'], 1)
+
+    async def test_index_with_only_stale_children_is_still_visited(self):
+        index = ('<sitemapindex>'
+                 f'<sitemap><loc>{BASE}/sitemap-a.xml</loc><lastmod>2020-01-01</lastmod></sitemap>'
+                 '</sitemapindex>').encode()
+        maps = {'/robots.txt': f'Sitemap: {BASE}/sitemap.xml\n'.encode(), '/sitemap.xml': index,
+                '/sitemap-a.xml': b'<urlset></urlset>'}
+        hits = []
+
+        async def fetch(_c, _s, url, cache=False):
+            path = url.removeprefix(BASE)
+            hits.append(path)
+            return (maps[path], url) if path in maps else None
+        with patch.object(backfill.Backfill, 'fetch', fetch), contextlib.redirect_stdout(io.StringIO()):
+            await backfill.Backfill(self.args()).run([SOURCE])
+        self.assertIn('/sitemap-a.xml', hits)
 
     def test_merge_parts(self):
         parts = Path(self.tmp.name) / 'parts'

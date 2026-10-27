@@ -165,6 +165,13 @@ class Backfill(news.Collector):
     def in_window(self, day: Date | None) -> bool:
         return day is not None and self.start <= day <= self.end
 
+    def stale_child(self, entry: dict) -> bool:
+        """A child sitemap last modified before the window (minus --lastmod-slack days) cannot
+        list a story published inside it. Only used when its URL names no date."""
+        lastmod = parse_day(entry["lastmod"])
+        slack = timedelta(days=getattr(self.args, "lastmod_slack", 3))
+        return lastmod is not None and lastmod < self.start - slack
+
     def child_relevant(self, entry: dict) -> bool | None:
         """True: names a month in the window. False: names only other months or is
         clearly not news. None: no date information."""
@@ -182,7 +189,8 @@ class Backfill(news.Collector):
         status = {"source": source["slug"], "name": source["name"], "url": source["url"],
                   "checked_at": news.now(), "status": "no_articles", "window": [str(self.start), str(self.end)],
                   "sitemaps": 0, "candidates": 0, "found": 0, "new": 0, "skipped_robots": 0,
-                  "out_of_window": 0, "unparsed": 0, "section_skipped": 0, "methods": [], "errors": []}
+                  "out_of_window": 0, "unparsed": 0, "section_skipped": 0, "sitemaps_pruned": 0,
+                  "methods": [], "errors": []}
 
         policies = {}
         policy_locks = {}
@@ -293,11 +301,20 @@ class Backfill(news.Collector):
                                 continue
                             status["sitemaps"] += 1
                             if kind == "index":
-                                children = []
+                                children, stale = [], []
+                                prune = getattr(self.args, "prune_sitemaps", True)
                                 for entry in entries:
                                     rel = self.child_relevant(entry)
-                                    if rel is not False:
-                                        children.append((entry["loc"], scoped or rel is True, True))
+                                    if rel is False:
+                                        continue
+                                    child = (entry["loc"], scoped or rel is True, True)
+                                    (stale if prune and rel is None and self.stale_child(entry) else children).append(child)
+                                # An index whose every child looks stale is more likely to carry
+                                # wrong lastmod values than to be empty: visit them all then.
+                                if children:
+                                    status["sitemaps_pruned"] += len(stale)
+                                else:
+                                    children = stale
                                 # Prioritize dated archives, but always visit undated children too.
                                 children.sort(key=lambda item: not item[1])
                                 queue.extend(children)
@@ -361,15 +378,32 @@ class Backfill(news.Collector):
 
                 attempted = 0
                 page_limit = False
+                # Quota runs fetch concurrently but reserve a day's slot before each request,
+                # so filled days are never overfetched (in-flight requests count against the cap).
+                pending = dict.fromkeys(days, 0)
+                full_days = 0
+
+                def day_full(day):
+                    return counts[day] + pending[day] >= per_day
+
                 async def check_page(item):
-                    nonlocal attempted, incomplete, page_limit
                     url, entry = item
                     if per_day:
-                        if all(counts[d] >= per_day for d in days):
+                        if full_days == len(days):
                             return
                         day = hints[url][1]
-                        if day is not None and counts[day] >= per_day and url not in saved:
+                        if day is not None and url not in saved and day_full(day):
                             return
+                        if day is not None and url not in saved and url not in checked:
+                            pending[day] += 1
+                            try:
+                                return await check_one(url, entry)
+                            finally:
+                                pending[day] -= 1
+                    return await check_one(url, entry)
+
+                async def check_one(url, entry):
+                    nonlocal attempted, incomplete, page_limit, full_days
                     if url in saved:
                         status["found"] += 1
                         return
@@ -426,9 +460,13 @@ class Backfill(news.Collector):
                     # Avoid a second SQLite commit for every accepted story.
                     if per_day:
                         counts[article_day] += 1
+                        if counts[article_day] == per_day:
+                            full_days += 1
                 # Quota runs consume candidates in order to avoid overfetching
                 # filled days. Full backfills overlap bounded article requests.
-                workers = 1 if per_day else self.site_concurrency
+                if per_day:
+                    full_days = sum(counts[d] >= per_day for d in days)
+                workers = self.site_concurrency
                 def remaining():
                     for item in ordered:
                         if page_limit:
@@ -436,7 +474,7 @@ class Backfill(news.Collector):
                         yield item
                 async with news.aclosing(news.bounded_map(check_page, remaining(), workers)) as results:
                     async for _ in results:
-                        if per_day and all(counts[d] >= per_day for d in days):
+                        if per_day and full_days == len(days):
                             break
                         # On a page limit, drain requests already inside the budget;
                         # remaining() stops scheduling more candidates.
@@ -476,7 +514,11 @@ def main():
     p.add_argument("--max-sitemaps", type=int, default=120)
     p.add_argument("--max-undated", type=int, default=6, help="Deprecated; all undated children are now traversed")
     p.add_argument("--max-pages", type=int, default=30000, help="Article pages per publisher")
-    p.add_argument("--lastmod-slack", type=int, default=3, help="Deprecated; edit dates no longer exclude updated stories")
+    p.add_argument("--lastmod-slack", type=int, default=3,
+                   help="Days of slack when skipping child sitemaps last modified before the window "
+                        "(story edit dates never exclude stories)")
+    p.add_argument("--no-prune-sitemaps", dest="prune_sitemaps", action="store_false",
+                   help="Visit every child sitemap, even ones last modified before the window")
     p.add_argument("--full-text", action="store_true", help="Read article pages even when the sitemap has titles")
     p.add_argument("--per-day", type=int, default=0,
                    help="Keep at most N stories per publisher per day, spread evenly over the window (0 = all)")

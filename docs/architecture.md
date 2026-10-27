@@ -26,7 +26,7 @@ The admin form edits the compact record fields and metadata. Collected articles 
 
 ## Collector boundary
 
-The exact upstream source at `fa827a410c532e273173abfa36e29090100c0dd6` is retained under `scraper/upstream`. Both importer and server use byte-identical frozen publisher registries. The registry is configuration, not live evidence of feed availability.
+The exact upstream source at `296b50e661bd268840be7996a53a1ab7d2f935fd` is retained under `scraper/upstream`. Both importer and server use byte-identical frozen publisher registries. The registry is configuration, not live evidence of feed availability.
 
 `collect.py` delegates to the upstream robots-aware backfill path for a finite day/publisher selection. The upstream live poller lacks robots checks and is not the default command. The Python adapter reads saved JSONL, excludes bodies, validates attribution and sends batches of at most 100 records. It never dereferences article URLs, follows redirects, or runs indefinitely. HTTPS destination and resolved-IP restrictions protect bearer transport; local tests must explicitly choose `--allow-local` and `127.0.0.1`.
 
