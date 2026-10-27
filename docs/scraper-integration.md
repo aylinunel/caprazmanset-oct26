@@ -2,7 +2,7 @@
 
 ## Scope and provenance
 
-The upstream Turkish collector is copied as source into [`scraper/upstream/`](../scraper/upstream/) at commit [`fa827a410c532e273173abfa36e29090100c0dd6`](../scraper/upstream/UPSTREAM_PROVENANCE.json). The snapshot includes every top-level upstream Python file (including its tests), `requirements.txt`, `sources.json`, and the upstream `README.md`, `VALIDATION.md`, and `API_EVALUATION.md`. It deliberately excludes `.git`, `.github`, previous JSONL/live-status results, and SQLite databases.
+The upstream Turkish collector is copied as source into [`scraper/upstream/`](../scraper/upstream/) at commit [`296b50e661bd268840be7996a53a1ab7d2f935fd`](../scraper/upstream/UPSTREAM_PROVENANCE.json). The snapshot includes every top-level upstream Python file (including its tests), `requirements.txt`, `sources.json`, and the upstream `README.md`, `VALIDATION.md`, and `API_EVALUATION.md`. It deliberately excludes `.git`, `.github`, previous JSONL/live-status results, and SQLite databases.
 
 The imported [`sources.json`](../scraper/upstream/sources.json) remains the sole source registry. It has **53** publisher slugs: `hurriyet`, `mynet`, `sabah`, `milliyet`, `sozcu`, `sondakika`, `haberturk`, `halktv`, `onedio`, `birgun`, `t24`, `ntv`, `karar`, `memurlar`, `yenisafak`, `haber7`, `bloomberght`, `cnnturk`, `akit`, `internethaber`, `aa`, `tv100`, `ekonomim`, `nefes`, `diken`, `trthaber`, `cumhuriyet`, `ensonhaber`, `aksam`, `posta`, `haberglobal`, `odatv`, `gercekgundem`, `takvim`, `ahaber`, `aydinlik`, `star`, `tgrt`, `dunya`, `turkiyegz`, `oksijen`, `f5haber`, `haberler`, `milligazete`, `vatan`, `dirilis`, `yeniasya`, `artigercek`, `dha`, `yenicag`, `instacp`, `gazetelerdebugun`, and `tele1`.
 
@@ -77,7 +77,7 @@ An explicit near-real-time polling command is now available through `live.py`. N
 {
   "schemaVersion": 1,
   "runId": "hurriyet_2026_10_27",
-  "upstreamCommit": "fa827a410c532e273173abfa36e29090100c0dd6",
+  "upstreamCommit": "296b50e661bd268840be7996a53a1ab7d2f935fd",
   "articles": [
     {
       "source": "hurriyet",

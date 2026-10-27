@@ -178,7 +178,7 @@ class ImportNewsTests(unittest.TestCase):
         self.assertEqual([len(payload["articles"]) for payload in payloads], [100, 1])
         self.assertTrue(all(payload["schemaVersion"] == 1 for payload in payloads))
         self.assertTrue(all(payload["runId"] == "oct27_hurriyet_01" for payload in payloads))
-        self.assertTrue(all(payload["upstreamCommit"] == "fa827a410c532e273173abfa36e29090100c0dd6" for payload in payloads))
+        self.assertTrue(all(payload["upstreamCommit"] == "296b50e661bd268840be7996a53a1ab7d2f935fd" for payload in payloads))
         self.assertTrue(all(set(article) == {"source", "source_name", "url", "title", "published_at", "fetched_at", "summary", "method"}
                             for payload in payloads for article in payload["articles"]))
         self.assertNotIn("unit-test-secret", output.getvalue())

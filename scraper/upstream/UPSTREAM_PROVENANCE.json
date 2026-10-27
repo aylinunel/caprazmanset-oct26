@@ -1,13 +1,24 @@
 {
   "upstreamRepository": "https://github.com/aylinunel/turkish-news-scraper",
-  "upstreamCommit": "fa827a410c532e273173abfa36e29090100c0dd6",
+  "upstreamCommit": "296b50e661bd268840be7996a53a1ab7d2f935fd",
   "retrievedFor": "Çapraz Manşet bounded scraper integration",
   "copiedFiles": {
     "python": "All top-level *.py files, including upstream tests",
     "registry": "sources.json (53 publishers)",
     "dependencies": "requirements.txt and requirements.lock",
-    "documentation": ["README.md", "VALIDATION.md", "API_EVALUATION.md"]
+    "documentation": [
+      "README.md",
+      "VALIDATION.md",
+      "API_EVALUATION.md"
+    ]
   },
-  "excluded": [".git", ".github", "live_source_status.json", "SQLite databases", "JSONL collection results"],
-  "licenseStatus": "No LICENSE, COPYING, or NOTICE file was present in the pinned upstream Git tree at import time. No license is asserted or invented by this integration."
+  "excluded": [
+    ".git",
+    ".github",
+    "live_source_status.json",
+    "SQLite databases",
+    "JSONL collection results"
+  ],
+  "licenseStatus": "No LICENSE, COPYING, or NOTICE file was present in the pinned upstream Git tree at import time. No license is asserted or invented by this integration.",
+  "upstreamRef": "claude/backfill-speedups (pull request pending; re-pin to the merge commit once merged)"
 }

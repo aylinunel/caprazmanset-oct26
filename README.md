@@ -96,7 +96,7 @@ Source: [public interface](client/src/public), [editorial desk](server/editorial
 
 Repository: [aylinunel/caprazmanset-oct26](https://github.com/aylinunel/caprazmanset-oct26). GitHub reports this repository as **public** as of the engineering review on 2026-10-27. Repository visibility does not deploy the application or provision its database and authentication.
 
-Source-preserving refactor of the supplied Çapraz Manşet 3.0 HTML, with a protected Turkish editorial desk and the owner's existing [Turkish News Scraper](https://github.com/aylinunel/turkish-news-scraper) integrated at `fa827a410c532e273173abfa36e29090100c0dd6`.
+Source-preserving refactor of the supplied Çapraz Manşet 3.0 HTML, with a protected Turkish editorial desk and the owner's existing [Turkish News Scraper](https://github.com/aylinunel/turkish-news-scraper) integrated at `296b50e661bd268840be7996a53a1ab7d2f935fd`.
 
 The public site retains the supplied event comparisons, source profiles, spectrum/atlas, framing and headline-rule analysis, historical findings, methodology, search, and personal reading views. The monolithic artifact is now divided into feature modules, assets, a pure analysis layer, server-side editorial records and a separate collector. The public renderer intentionally remains a transitional imperative runtime to preserve its extensive existing behavior; this is not a claim that all legacy design debt has disappeared.
 
