@@ -12,7 +12,7 @@ No embedding model, vector database, RRF reranking, new API, database mutation, 
 
 `client/src/public/search-optimization.ts` shows 24 initial event cards and offers equal-sized progressive batches. The heading retains the exact full match count. Every result is reachable, query changes reset the window, progress is announced through a status region, and the same focused button remains after appending—even when completed, where `aria-disabled` replaces disabling/removing the focused control. Headline rows, original article/event/source links and route helpers are preserved.
 
-The existing `runtime.installPublicOverrides()` hook installs the overlay after historical initialization and disposes it during cleanup. Generated modules were not hand-edited. Rerunning the original extractor produced no diff in generated renderer, analysis or data files; the existing hook preserves the refinement automatically. Neither the corpus nor the user-added release-triggered GitHub workflow was changed. No debounce was introduced: input feedback and hash-URL updates remain immediate.
+The existing `runtime.installPublicOverrides()` hook installs the overlay after historical initialization and disposes it during cleanup. Generated modules were not hand-edited. Rerunning the original extractor produced no diff in generated renderer, analysis or corpus files; the existing hook preserves the refinement automatically. No workflow was modified by this optimization. Concurrent upstream reliability fixes, updated manifest metadata, the README architecture diagram and the user's replacement `Engineering checks` workflow were merged and preserved. That workflow runs offline checks rather than publishing packages. No debounce was introduced: input feedback and hash-URL updates remain immediate.
 
 ## Reproducible measurements
 
@@ -56,11 +56,15 @@ An earlier alternating probe did not control prior DOM size and measured 305.911
 
 ## Validation and guards
 
-The final application suite passes **66 tests in 13 files**; type checking and production build pass. New tests assert exact original-corpus result IDs/order, Turkish dotted/dotless I, dynamic notice/source state, minimum query length, unchanged snapshot data, one-time folding, first-40 article cap, cache disposal/remount behavior, preserved links/safe text, exact totals, all progressive results' reachability, window reset and focus retention. The actual original renderer also verifies `an` → 897 total / 24 initial cards / 48 after one more batch, then changes to `girne` with six cards and the correct hash URL.
+Before integrating concurrent upstream changes, the application suite passed **66 tests in 13 files**. After preserving those reliability fixes, it passed **82 tests in 15 files with no skips**, including the optional source-regeneration check enabled with `CAPRAZ_ORIGINAL_HTML` pointing to the supplied original. Type checking and production build pass. The merged Python adapter/wrapper suite passes **15 offline tests**. New search tests assert exact original-corpus result IDs/order, Turkish dotted/dotless I, dynamic notice/source state, minimum query length, unchanged snapshot data, one-time folding, first-40 article cap, cache disposal/remount behavior, preserved links/safe text, exact totals, all progressive results' reachability, window reset and focus retention. The actual original renderer also verifies `an` → 897 total / 24 initial cards / 48 after one more batch, then changes to `girne` with six cards and the correct hash URL.
 
 Deterministic regressions guard the performance mechanism—one-time normalization and bounded initial DOM—without fragile machine-dependent timing assertions in CI. The manual benchmark's matching p95 target is 5 ms under comparable conditions; measured p95 is 3.282 ms. Re-run the fixed scripts on the same environment to compare trends before further optimizations. The existing legacy bootstrap chunk warning remains documented and is not suppressed.
 
 A readable real-rendered screenshot confirms the broad-search heading of 897 and preserved layout. A real-browser JavaScript profiling attempt was unavailable because the current My Browser integration does not support console execution. Therefore **no Chrome performance trace, real-user monitoring, INP/LCP/CLS target, or browser-latency improvement is claimed**. jsdom is a reproducible regression signal, not proof of real-user responsiveness. No new field telemetry or unattended profiling job was installed.
+
+## Repository delivery constraint
+
+During the final save, GitHub was found to contain newer commits and the repository visibility was verified as **public** (`isPrivate: false`). The optimization was committed locally and merged with the newer upstream history without force-pushing or changing visibility. Public pushing requires explicit confirmation; until then the merged code and report remain available as a local source archive. No application publication was enabled.
 
 ## Attempt ledger
 
