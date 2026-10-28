@@ -32,6 +32,9 @@ def collector_files(root: Path) -> list[Path]:
 def ingest(store: Store, root: Path, since: str | None = None, until: str | None = None) -> dict:
     stats: Counter = Counter()
     by_day: dict[str, dict[str, dict]] = defaultdict(dict)
+    # A republished story comes back with a later date: one URL is kept once, on its earliest day.
+    where = {r["id"]: d for d in store.days() for r in store.read_day(d)}
+    stored = set(where)
     for path in collector_files(root):
         for line in _lines(path):
             stats["read"] += 1
@@ -52,9 +55,14 @@ def ingest(store: Store, root: Path, since: str | None = None, until: str | None
                 stats["out_of_window"] += 1
                 continue
             rid = article_id(raw["url"])
-            if rid in by_day[day]:
+            first = where.get(rid, day)
+            if rid in by_day[day] or (first != day and (rid in stored or first < day)):
                 stats["duplicate"] += 1
                 continue
+            if first != day:  # seen later in this ingest: move it to this earlier day
+                del by_day[first][rid]
+                stats["duplicate"] += 1
+            where[rid] = day
             by_day[day][rid] = {
                 "id": rid,
                 "source": str(raw["source"]).strip().lower(),
@@ -65,6 +73,7 @@ def ingest(store: Store, root: Path, since: str | None = None, until: str | None
                 "day": day,
                 "method": raw.get("method") or "",
             }
+    stats["added"] += 0
     for day, recs in sorted(by_day.items()):
         added, total = store.merge_day(day, recs.values())
         stats["added"] += added

@@ -31,6 +31,18 @@ class StoreTest(unittest.TestCase):
             self.assertEqual(ingest(store, src, "2026-09-01", "2026-09-30")["added"], 0)
             self.assertEqual(store.day_hash("2026-09-01"), h)  # byte-identical on re-run
 
+    def test_republished_story_is_kept_once_on_its_earliest_day(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            src = Path(tmp, "run"); src.mkdir()
+            row = '{"source":"diken","url":"https://www.diken.com.tr/x/","title":"A","published_at":"%s"}'
+            Path(src, "a.jsonl").write_text(row % "2026-10-27T07:00:00+03:00")
+            Path(src, "b.jsonl").write_text(row % "2026-10-07T09:00:00+03:00")
+            store = Store(Path(tmp, "store"))
+            self.assertEqual(ingest(store, src)["added"], 1)
+            Path(src, "c.jsonl").write_text(row % "2026-10-28T07:00:00+03:00")  # a later run
+            self.assertEqual(ingest(store, src)["added"], 0)
+            self.assertEqual([d for d in store.days() if store.read_day(d)], ["2026-10-07"])
+
 
 if __name__ == "__main__":
     unittest.main()
