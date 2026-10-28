@@ -1693,3 +1693,15 @@ th{color:var(--ink);border-bottom-width:3px}
   .sec.xink{margin-left:-16px;margin-right:-16px;padding:28px 16px}}
 @media print{body{background-image:none}.phead,.sec.xink{background:#fff;color:#000}}
 .wrap.page > :first-child:not(.phead){margin-top:30px}
+
+/* Olaylar süzgeçleri */
+.xfilters{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:0 0 14px;background:var(--surface)}
+.xfilters>summary{cursor:pointer;font-weight:600;font-size:14px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.xfgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px 16px;margin:12px 0 8px}
+.xf{display:flex;flex-direction:column;gap:6px;min-width:0}
+.xfl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.xfr{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.xf select,.xf input[type=date]{max-width:100%;min-width:0}
+.xfr input[type=date]{flex:1 1 120px}
+.xfchip{font-size:12px;font-weight:500;padding:2px 8px;border-radius:999px;background:var(--line);color:inherit}
+.xfcount{margin-bottom:10px}

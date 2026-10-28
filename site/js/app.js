@@ -4448,19 +4448,18 @@ function pgEvents(q) {
     h += '<div class="phead"><div class="eyebrow">Olaylar</div><h1>Aynı olayı kimler verdi</h1>' +
       '<p class="lede">' + WIN.range + ' arasında en az beş kurumun verdiği ' + D.E.length.toLocaleString("tr") + " olay. Her kartta olayın tarafsız başlığı, " +
       "onu veren kurumların yelpazedeki dağılımı ve kurum sayısı var. Kartı açınca özet, bütün başlıklar " +
-      "ve v1'in derin analizi gelir.</p></div>" +
-      '<div class="ctl"><input type="search" id="fq" placeholder="Olay, kurum ya da konu ara…" style="min-width:220px">' +
-      '<select id="ftopic"><option value="">Bütün konular</option>' +
-      v3topicList().slice().sort(function (a, b) { return a.n.localeCompare(b.n, "tr"); }).map(function (t) {
-        return '<option value="' + t.k + '">' + esc(t.n) + " (" + t.e.length + ")</option>"; }).join("") + "</select>" +
-      '<select id="fsort"><option value="s">Kurum sayısı</option><option value="l">En yeni</option>' +
-      '<option value="p">Ayrışma aralığı</option><option value="m">Ortalama yoğunluk</option></select>' +
-      '<label class="xcheck"><input type="checkbox" id="fbs"> Yalnızca kör noktalar</label>' +
+      "ve olayın ayrıntılı analizi gelir. Tarih, haber türü, yanlılık türü, kapsama, taraf, kurum ve yoğunluk " +
+      "süzgeçleri birlikte çalışır.</p></div>" +
+      '<div class="ctl"><input type="search" id="fq" placeholder="Olay, kurum ya da konu ara…" style="min-width:220px" value="' + esc(FEEDF.q) + '">' +
+      fSel("ftopic", "Bütün konular", v3topicList().slice().sort(function (a, b) { return a.n.localeCompare(b.n, "tr"); })
+        .map(function (t) { return [t.k, t.n + " (" + t.e.length + ")"]; })) +
+      fSel("fsort", null, [["s", "En çok kurumun verdiği"], ["l", "En yeni"], ["o", "En eski"], ["n", "En çok haber"],
+        ["p", "En ayrışan (yoğunluk aralığı)"], ["m", "En yüklü (ortalama yoğunluk)"]]) +
       '<span style="display:inline-flex;gap:4px;margin-left:auto">' +
       ["cards:Kartlar", "spectrum:Şerit", "table:Tablo"].map(function (x) {
         var p = x.split(":"); return '<button class="chip" data-fv2="' + p[0] + '" aria-pressed="' +
-          (FEEDVIEW === p[0]) + '">' + p[1] + "</button>"; }).join("") + "</span>" +
-      '<span id="fcount" class="mono" style="font-size:12px;color:var(--muted)"></span></div><div id="flist"></div>';
+          (FEEDVIEW === p[0]) + '">' + p[1] + "</button>"; }).join("") + "</span></div>" + feedFilters() +
+      '<div class="ctl xfcount"><span id="fcount" class="mono" style="font-size:12px;color:var(--muted)"></span></div><div id="flist"></div>';
   }
   if (tab === "kor") h += blindspotPage(q) + v5BlindTable();
   if (tab === "konular") h += topicsIndex();
@@ -4469,26 +4468,37 @@ function pgEvents(q) {
 }
 function renderFeed() {
   var box = $("#flist"); if (!box) return;
-  var q = (($("#fq") || {}).value || "").toLocaleLowerCase("tr");
-  var tp = ($("#ftopic") || {}).value || "", k = ($("#fsort") || {}).value || "s";
-  var onlyBs = $("#fbs") && $("#fbs").checked;
+  readFeedF();
+  var F = FEEDF, q = F.q.toLocaleLowerCase("tr"), k = F.sort;
   var list = D.E.filter(function (e) {
     if (v3isIlanEvent(e)) return false;
-    if (tp && e.tp.indexOf(tp) < 0) return false;
-    if (onlyBs && !e.bs) return false;
+    var x = evx(e);
+    if (F.topic && e.tp.indexOf(F.topic) < 0) return false;
+    if (F.from && x.d1 < F.from) return false;
+    if (F.to && x.d0 > F.to) return false;
+    if (F.sec && x.sec !== F.sec) return false;
+    if (F.key && !x.keys[F.key]) return false;
+    if (e.s.length < F.min) return false;
+    if (F.side === "bs" ? !e.bs : F.side && x.side !== F.side) return false;
+    if (F.src && e.s.indexOf(F.src) < 0) return false;
+    if (e.m < F.vmin) return false;
     if (!q) return true;
     var hay = (e.t + " " + e.sum + " " + e.s.map(srcName).join(" ") + " " +
       e.tp.map(function (x) { return TPX[x] ? TPX[x].n : x; }).join(" ")).toLocaleLowerCase("tr");
     return hay.indexOf(q) >= 0;
   }).sort(function (a, b) {
     if (k === "l") return b.l.localeCompare(a.l);
+    if (k === "o") return a.f.localeCompare(b.f);
+    if (k === "n") return b.n - a.n;
     if (k === "p") return b.p - a.p;
     if (k === "m") return b.m - a.m;
     return b.s.length - a.s.length || b.l.localeCompare(a.l);
   });
+  var sig = JSON.stringify(F);
   var c = $("#fcount"); if (c) c.textContent = list.length + " olay";
-  if (renderFeed._q !== q + tp + k + onlyBs) { FEEDN = 60; renderFeed._q = q + tp + k + onlyBs; }
-  if (!list.length) { box.innerHTML = '<p class="xempty">Bu süzgeçle eşleşen olay yok.</p>'; return; }
+  if (renderFeed._q !== sig) { FEEDN = 60; renderFeed._q = sig; }
+  feedChips();
+  if (!list.length) { box.innerHTML = '<p class="xempty">Bu süzgeçlerle eşleşen olay yok. <button class="chip" data-freset>Süzgeçleri temizle</button></p>'; wireFeedReset(box); return; }
   box.innerHTML = FEEDVIEW === "table" ? evTable(list) : FEEDVIEW === "spectrum" ?
     '<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px">' +
     list.slice(0, FEEDN).map(spectrumCard).join("") + "</div>" : '<div class="xcards">' + cards(list.slice(0, FEEDN)) + "</div>";
@@ -4496,6 +4506,88 @@ function renderFeed() {
     Math.min(60, list.length - FEEDN) + " olay daha göster (" + (list.length - FEEDN) + " kaldı)</button>";
   var fm = $("#fmore"); if (fm) fm.onclick = function () { FEEDN += 60; renderFeed(); };
   wireGo(box);
+}
+
+/* ---------- Olaylar süzgeçleri ----------
+   Per-event facts the filters need, computed once: the days it spans, its main section
+   (the section most of its headlines carry), the framing keys any of its headlines carry,
+   and which side covered it more once each side is divided by its active outlets
+   (e.ns, the blind-spot normalisation): ≥ 60 % left share is "left", ≤ 40 % is "right". */
+var FEEDF = { q: "", topic: "", sort: "s", from: "", to: "", sec: "", key: "", min: 5, side: "", src: "", vmin: 0 };
+var EVX = {};
+function evx(e) {
+  if (EVX[e.i]) return EVX[e.i];
+  var sec = {}, keys = {};
+  e.a.forEach(function (i) { var a = ART[i]; if (!a) return; sec[a.c] = (sec[a.c] || 0) + 1;
+    a.k.forEach(function (k) { keys[k] = (keys[k] || 0) + 1; }); });
+  var top = Object.keys(sec).sort(function (x, y) { return sec[y] - sec[x]; })[0] || "";
+  var ns = e.ns ? e.ns[0] : null;
+  return (EVX[e.i] = { d0: e.f.slice(0, 10), d1: e.l.slice(0, 10), sec: top, keys: keys,
+    side: ns == null ? "" : ns >= 60 ? "left" : ns <= 40 ? "right" : "mid" });
+}
+function fSel(id, all, opts, label) {
+  var v = FEEDF[{ ftopic: "topic", fsort: "sort", fsec: "sec", fkey: "key", fmin: "min", fside: "side", fsrc: "src", fvmin: "vmin" }[id]];
+  return '<select id="' + id + '" aria-label="' + esc(label || all || "Sırala") + '">' + (all ? '<option value="">' + esc(all) + "</option>" : "") +
+    opts.map(function (o) { return '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(v) ? " selected" : "") + ">" + esc(o[1]) + "</option>"; }).join("") + "</select>";
+}
+var FEEDIDS = ["#fq", "#ftopic", "#fsort", "#ffrom", "#fto", "#fsec", "#fkey", "#fmin", "#fside", "#fsrc", "#fvmin"];
+function feedFilters() {
+  var used = {}, secs = {}, keys = {};
+  D.E.forEach(function (e) { if (v3isIlanEvent(e)) return; var x = evx(e);
+    e.s.forEach(function (s) { used[s] = (used[s] || 0) + 1; }); secs[x.sec] = (secs[x.sec] || 0) + 1;
+    Object.keys(x.keys).forEach(function (k) { keys[k] = (keys[k] || 0) + 1; }); });
+  var d0 = DAYS[0], d1 = DAYS[DAYS.length - 1];
+  var back = function (n) { var d = new Date(d1 + "T00:00Z"); d.setUTCDate(d.getUTCDate() - n + 1); return d.toISOString().slice(0, 10); };
+  return '<details class="xfilters"' + (window.innerWidth > 700 ? " open" : "") + '><summary>Süzgeçler <span id="fchips"></span></summary>' +
+    '<div class="xfgrid">' +
+    '<div class="xf"><span class="xfl">Tarih</span><div class="xfr">' +
+      '<input type="date" id="ffrom" aria-label="Başlangıç günü" min="' + d0 + '" max="' + d1 + '" value="' + FEEDF.from + '">' +
+      '<span aria-hidden="true">–</span><input type="date" id="fto" aria-label="Bitiş günü" min="' + d0 + '" max="' + d1 + '" value="' + FEEDF.to + '"></div>' +
+      '<div class="xfr">' + [["7", "Son 7 gün"], ["30", "Son 30 gün"], ["", "Tüm dönem"]].map(function (r) {
+        return '<button class="chip" data-frange="' + (r[0] ? back(+r[0]) : "") + '">' + r[1] + "</button>"; }).join("") + "</div></div>" +
+    '<div class="xf"><span class="xfl">Haber türü</span>' + fSel("fsec", "Bütün türler", Object.keys(secs).filter(Boolean)
+      .sort(function (a, b) { return secs[b] - secs[a]; }).map(function (k) { return [k, (SECT[k] || k) + " (" + secs[k] + ")"]; }), "Haber türü") + "</div>" +
+    '<div class="xf"><span class="xfl">Yanlılık türü</span>' + fSel("fkey", "Bütün yapılar", Object.keys(keys)
+      .sort(function (a, b) { return keys[b] - keys[a]; }).map(function (k) { return [k, (BIA[k] ? BIA[k].tr : k) + " (" + keys[k] + ")"]; }), "Yanlılık türü") + "</div>" +
+    '<div class="xf"><span class="xfl">Kapsama</span>' + fSel("fmin", null, [[5, "En az 5 kurum (hepsi)"], [8, "En az 8 kurum"], [10, "En az 10 kurum"], [14, "En az 14 kurum"]], "En az kurum") + "</div>" +
+    '<div class="xf"><span class="xfl">Taraf</span>' + fSel("fside", "Bütün olaylar", [["left", "Solda daha çok verilen"], ["mid", "Dengeli verilen"],
+      ["right", "Sağda daha çok verilen"], ["bs", "Yalnızca kör noktalar"]], "Taraf") + "</div>" +
+    '<div class="xf"><span class="xfl">Kurum</span>' + fSel("fsrc", "Bütün kurumlar", Object.keys(used)
+      .sort(function (a, b) { return srcName(a).localeCompare(srcName(b), "tr"); }).map(function (s) { return [s, srcName(s) + " (" + used[s] + ")"]; }), "Kurum") + "</div>" +
+    '<div class="xf"><span class="xfl">Yoğunluk</span>' + fSel("fvmin", null, [[0, "Bütün yoğunluklar"], [10, "Ortalama ≥ 10"], [15, "Ortalama ≥ 15"], [25, "Ortalama ≥ 25"]], "En düşük ortalama yoğunluk") + "</div>" +
+    '</div><p class="xsmall">Taraf, her tarafın verdiği kurum sayısı kendi etkin kurum sayısına bölündükten sonra ' +
+    'hesaplanır (kör nokta kuralıyla aynı): sol payı %60 ve üstü “solda daha çok”, %40 ve altı “sağda daha çok”. ' +
+    'Haber türü olaydaki başlıkların çoğunun bölümü; yanlılık türü, olaydaki en az bir başlıkta görülen yapı.</p></details>';
+}
+function readFeedF() {
+  var v = function (id, d) { var n = $(id); return n ? n.value : d; };
+  FEEDF = { q: v("#fq", FEEDF.q), topic: v("#ftopic", FEEDF.topic), sort: v("#fsort", FEEDF.sort) || "s",
+    from: v("#ffrom", FEEDF.from), to: v("#fto", FEEDF.to), sec: v("#fsec", FEEDF.sec), key: v("#fkey", FEEDF.key),
+    min: +v("#fmin", FEEDF.min) || 5, side: v("#fside", FEEDF.side), src: v("#fsrc", FEEDF.src), vmin: +v("#fvmin", FEEDF.vmin) || 0 };
+  if (FEEDF.from && FEEDF.to && FEEDF.from > FEEDF.to) { var t = FEEDF.from; FEEDF.from = FEEDF.to; FEEDF.to = t; }
+}
+function feedChips() {
+  var F = FEEDF, c = [], box = $("#fchips"); if (!box) return;
+  var day = function (d) { return fmtD(d + "T00:00"); };
+  if (F.from || F.to) c.push((F.from ? day(F.from) : "başından") + " – " + (F.to ? day(F.to) : "bugüne"));
+  if (F.sec) c.push(SECT[F.sec] || F.sec);
+  if (F.key) c.push(BIA[F.key] ? BIA[F.key].tr : F.key);
+  if (F.min > 5) c.push("≥ " + F.min + " kurum");
+  if (F.side) c.push({ left: "solda daha çok", mid: "dengeli", right: "sağda daha çok", bs: "kör nokta" }[F.side]);
+  if (F.src) c.push(srcName(F.src));
+  if (F.vmin) c.push("yoğunluk ≥ " + F.vmin);
+  box.innerHTML = c.length ? c.map(function (x) { return '<span class="xfchip">' + esc(x) + "</span>"; }).join("") +
+    '<button class="chip" data-freset>Temizle</button>' : "";
+  wireFeedReset(box);
+}
+function wireFeedReset(root) {
+  [].forEach.call(root.querySelectorAll("[data-freset]"), function (b) {
+    b.onclick = function (ev) { ev.preventDefault();
+      FEEDF = { q: "", topic: "", sort: FEEDF.sort, from: "", to: "", sec: "", key: "", min: 5, side: "", src: "", vmin: 0 };
+      FEEDIDS.forEach(function (id) { var n = $(id); if (!n) return;
+        if (id === "#fsort") return; n.value = id === "#fmin" ? "5" : id === "#fvmin" ? "0" : ""; });
+      renderFeed(); };
+  });
 }
 
 /* ---------- Kör noktalar ---------- */
@@ -4927,8 +5019,11 @@ function v2After(path, tab, params) {
   }
   if (path === "/olaylar" && tab === "liste") {
     renderFeed();
-    ["#fq", "#ftopic", "#fsort", "#fbs"].forEach(function (s) {
+    FEEDIDS.forEach(function (s) {
       var n = $(s); if (n) n[s === "#fq" ? "oninput" : "onchange"] = renderFeed; });
+    [].forEach.call(document.querySelectorAll("[data-frange]"), function (b) {
+      b.onclick = function () { $("#ffrom").value = b.getAttribute("data-frange"); $("#fto").value = ""; renderFeed(); };
+    });
     [].forEach.call(document.querySelectorAll("[data-fv2]"), function (b) {
       b.onclick = function () {
         FEEDVIEW = b.getAttribute("data-fv2");
