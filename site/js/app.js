@@ -5371,7 +5371,8 @@ function finding03() {
       "normalize edilip şansla açıklanabilecek durumlar (binom testi, p &lt; 0,10) çıkarıldığında geriye <b>" +
       bs.length + " olay</b> kalıyor — " + big.toLocaleString("tr") + " olayın %" + (100 * bs.length / big).toFixed(1).replace(".", ",") +
       sufNum((100 * bs.length / big).toFixed(1).replace(".", ",")) + ". <b>" + bl + "</b> tanesi sol kurumların, <b>" + br + "</b> tanesi sağ kurumların görmediği olaylar. " +
-      "Ayrışma büyük ölçüde olayın <b>seçiminde</b> değil, <b>anlatımında</b>.",
+      (D.ADV && D.ADV.agenda && D.ADV.agenda.mantel_p < .05 ? "Kör noktalar seyrek; ama kurumların olay seçimi, yelpazedeki konumlarıyla zayıf da olsa ilişkili (İleri analiz A)." :
+        "Ayrışma büyük ölçüde olayın <b>seçiminde</b> değil, <b>anlatımında</b>."),
     note: "<b>Ham sayım neden yanıltıcı:</b> " + act.left + " sol kuruma karşı " + act.right + " sağ kurum varken, sıradan bir olayın " +
       "solda hiç görünmemesi editoryal bir tercih olmadan da sık olur. Kural ve test için " +
       '<a class="lnk" href="#/yontem?s=5">Yöntem › Olaylar ve kör nokta</a>; olayların listesi ' +
@@ -5455,7 +5456,7 @@ function pgAdvanced() {
       pcText) + "</div>";
 
   /* ---- A. agenda clustering */
-  var ord = A.order, ov = A.ov;
+  var ord = A.order, ov = A.phi;
   var pairs = [];
   ord.forEach(function (a, i) { ord.forEach(function (b, j) { if (j > i) pairs.push([a, b, ov[a][b]]); }); });
   pairs.sort(function (x, y) { return y[2] - x[2]; });
@@ -5465,17 +5466,18 @@ function pgAdvanced() {
     '<div style="margin:14px 0 4px"><div class="bignum" style="color:var(--ok)">r = ' + A.mantel_r.toFixed(2) +
     '</div><div class="bignum-l">gündem benzerliği × yerleşim farkı · p = ' + A.mantel_p.toFixed(2) + "</div></div>" +
     '<p class="claim">Her kurum, verdiği olayların kümesiyle temsil edildi ve kurum çiftleri bu kümelerin ' +
-    "örtüşmesine göre <b>hiyerarşik olarak kümelendi</b> (ortalama bağlantı). En çok örtüşen çift <b>" +
-    esc(nm(hi[0])) + " – " + esc(nm(hi[1])) + "</b> (%" + Math.round(100 * hi[2]) + "), en az örtüşen <b>" +
-    esc(nm(lo[0])) + " – " + esc(nm(lo[1])) + "</b> (%" + Math.round(100 * lo[2]) + "). Gündem benzerliği ile " +
+    "benzerliğine göre <b>hiyerarşik olarak kümelendi</b> (ortalama bağlantı). En benzer çift <b>" +
+    esc(nm(hi[0])) + " – " + esc(nm(hi[1])) + "</b> (φ = " + dec(hi[2], 2) + "), en farklı <b>" +
+    esc(nm(lo[0])) + " – " + esc(nm(lo[1])) + "</b> (φ = " + dec(lo[2], 2) + "). Gündem benzerliği ile " +
     "kayıt defterindeki yerleşim farkı arasındaki ilişki <b>r = " + A.mantel_r.toFixed(2) + "</b> ve 9.999 " +
     "permütasyonluk Mantel testinde <b>" + sig(A.mantel_p) + "</b>. " + agText + "</p></div></div>" +
-    '<div class="body"><div class="note warn" style="margin-bottom:14px"><b>Ölçüm:</b> örtüşme katsayısı ' +
-    "(ortak olay ÷ küçük kurumun olay sayısı) kullanıldı; Jaccard benzerliği büyük arşivli kurumları yapay olarak " +
-    "birbirine yaklaştırırdı. Yalnızca en az 150 olaya giren ya da en az 1.000 siyasi başlığı olan " + ord.length + " kurum dahil." +
+    '<div class="body"><div class="note warn" style="margin-bottom:14px"><b>Ölçüm:</b> iki kurumun olay kapsamının phi korelasyonu ' +
+    "(φ; 0 = şanstan farksız, pozitif = beklenenden çok ortak olay). Örtüşme katsayısı ve Jaccard, en çok olay veren " +
+    "kurumu herkese yakın gösterirdi; phi bunu kurum büyüklüğüne göre düzeltir. Yalnızca en az 150 olaya giren ya da en az 1.000 siyasi başlığı olan " + ord.length + " kurum dahil." +
     (thin.length ? " " + thin.map(function (s) { return esc(nm(s)); }).join(", ") + " için dönemin her gününden veri yok; kümelemedeki yerleri kısmen bundan etkilenebilir." : "") + "</div>" +
-    fig("adv-a", "olay örtüşmesi · kümeleme sırasına göre", {
-      legend: legendHTML([{ c: "var(--seq4)", t: "yüksek örtüşme" }, { c: "var(--seq1)", t: "düşük örtüşme" }]),
+    fig("adv-a", "gündem benzerliği (φ) · kümeleme sırasına göre", {
+      legend: legendHTML([{ c: "var(--seq4)", t: "φ ≥ 0,15 · çok benzer" }, { c: "var(--seq3)", t: "0,05 – 0,15" },
+        { c: "var(--seq2)", t: "şanstan farksız" }, { c: "var(--seq1)", t: "φ < −0,05 · farklı" }]),
       take: "Kare bloklar birlikte kümelenen kurumlardır. Blokların içinde solun ve sağın kurumları " +
         "karışık duruyorsa, gündemi yerleşim değil başka bir şey (hız, kapsam, arşiv) belirliyor demektir." }) +
     "</div></section>";
@@ -5499,7 +5501,7 @@ function pgAdvanced() {
     fig("adv-b", "1. bileşen × 2. bileşen · nokta rengi yerleşim", {
       legend: legendHTML([{ c: "var(--left)", t: "sola yerleşik" }, { c: "var(--mid)", t: "merkez" }, { c: "var(--right)", t: "sağa yerleşik" }]),
       take: "Yatay eksende sağa gidildikçe yapı kullanımı artıyor. Renklerin soldan sağa kızardığını görüyorsanız, " +
-        "bu yazma biçiminin yerleşimle hizalandığı anlamına gelir — gündem seçiminde görülmeyen hizalanma." }) +
+        "bu yazma biçiminin yerleşimle hizalandığı anlamına gelir" + (agSig ? "; gündem seçimi de yerleşimi izliyor." : " — gündem seçiminde görülmeyen hizalanma.") }) +
     "</div></section>";
 
   /* ---- C. topics */
@@ -5549,7 +5551,7 @@ function pgAdvanced() {
     "</div></section>";
 
   h += '<div class="note" style="margin-top:30px"><b>Yöntemler.</b> Hiyerarşik kümeleme (ortalama bağlantı, ' +
-    "örtüşme katsayısı), Mantel testi (9.999 permütasyon), temel bileşenler analizi (standartlaştırılmış yapı " +
+    "phi korelasyonu), Mantel testi (9.999 permütasyon), temel bileşenler analizi (standartlaştırılmış yapı " +
     "oranları), Spearman sıra ilişkisi, Dirichlet çok terimli karışım (GSDMM, Yin ve Wang 2014), NPMI konu " +
     "tutarlılığı ve Jensen–Shannon ıraksaması. Hepsi scikit-learn ve SciPy ile, yöntem listesi " +
     '<a class="lnk" href="https://github.com/academic/awesome-datascience" target="_blank" rel="noopener">awesome-datascience</a> ' +
@@ -5582,18 +5584,18 @@ function advHeat() {
   var A = ADV.agenda, ord = A.order, n = ord.length;
   var cs = 30, padL = 128, padT = 112, w = padL + n * cs + 16, h = padT + n * cs + 12;
   var s = svg(w, h); s.style.maxWidth = w + "px";
-  var col = function (v) { return v >= .8 ? "var(--seq4)" : v >= .65 ? "var(--seq3)" : v >= .5 ? "var(--seq2)" : "var(--seq1)"; };
+  var col = function (v) { return v >= .15 ? "var(--seq4)" : v >= .05 ? "var(--seq3)" : v >= -.05 ? "var(--seq2)" : "var(--seq1)"; };
   ord.forEach(function (a, i) {
     var lab = tx(s, padL - 8, padT + i * cs + cs / 2 + 4, clip(SRC[a] ? SRC[a].n : a, 18), { anchor: "end" });
     s.appendChild(mk("rect", { x: padL - 6, y: padT + i * cs + 6, width: 3, height: cs - 12, fill: lean(SRC[a] ? SRC[a].lean : null) }));
     tx(s, padL + i * cs + cs / 2 + 4, padT - 8, clip(SRC[a] ? SRC[a].n : a, 16), { rotate: -55, anchor: "start" });
     ord.forEach(function (b, j) {
-      var v = A.ov[a][b];
+      var v = A.phi[a][b];
       var r = mk("rect", { x: padL + j * cs + 1, y: padT + i * cs + 1, width: cs - 2, height: cs - 2, rx: 3,
         fill: i === j ? "var(--line)" : col(v) });
       s.appendChild(r);
       if (i !== j) bindTip(r, "<span class='k'>" + esc(SRC[a] ? SRC[a].n : a) + " ↔ " + esc(SRC[b] ? SRC[b].n : b) +
-        "</span>Örtüşme %" + Math.round(100 * v) + "<br>" + A.size[a] + " ve " + A.size[b] + " olay");
+        "</span>φ = " + dec(v, 2) + "<br>" + A.size[a] + " ve " + A.size[b] + " olay");
     });
   });
   return s;
@@ -5813,9 +5815,10 @@ function methodPaper() {
 
   h += sec(7, "İleri analizler") +
     "<p>Yalnızca en az 150 olaya giren ya da en az 1.000 haber başlığı olan kurumlar dahil edilmiştir. Bütün ilişki testleri permütasyonla yapılmıştır.</p>" +
-    "<h3>7.1 Gündem kümelemesi</h3><p>Kurumlar, verdikleri olay kümeleri üzerinden örtüşme katsayısıyla karşılaştırılmıştır:</p>" +
-    '<div class="eq">O(A, B) = |E<sub>A</sub> ∩ E<sub>B</sub>| / min(|E<sub>A</sub>|, |E<sub>B</sub>|)</div>' +
-    "<p>Uzaklık matrisi (1 − O) ortalama bağlantılı hiyerarşik kümelemeye girdi olarak verilmiş; gündem uzaklığı ile yerleşim farkı " +
+    "<h3>7.1 Gündem kümelemesi</h3><p>Kurumlar, verdikleri olay kümeleri üzerinden phi korelasyonuyla karşılaştırılmıştır " +
+    "(N olay sayısı; örtüşme katsayısının aksine en çok olay veren kurumu herkese yakın göstermez):</p>" +
+    '<div class="eq">φ(A, B) = (|E<sub>A</sub> ∩ E<sub>B</sub>|·N − |E<sub>A</sub>|·|E<sub>B</sub>|) / √(|E<sub>A</sub>|·|E<sub>B</sub>|·(N − |E<sub>A</sub>|)·(N − |E<sub>B</sub>|))</div>' +
+    "<p>Uzaklık matrisi (1 − φ) ortalama bağlantılı hiyerarşik kümelemeye girdi olarak verilmiş; gündem uzaklığı ile yerleşim farkı " +
     "arasındaki ilişki Mantel testiyle (Mantel, 1967; 9.999 permütasyon) sınanmıştır: r = " + (G.mantel_r != null ? G.mantel_r.toFixed(2) : "—") +
     ", p = " + (G.mantel_p != null ? G.mantel_p.toFixed(2) : "—") + ".</p>" +
     "<h3>7.2 Yazma biçiminin temel bileşenleri</h3><p>Her kurum için, siyasi başlıklarda her çerçeveleme yapısının görülme oranından oluşan bir " +
@@ -7012,51 +7015,6 @@ function v3pipeline() {
 }
 function v3methodSection() {
   return '<section class="sec cm3-method" data-cm3 id="cm3method"><h2>' + esc(t3("pipeHead")) + "</h2>" + v3pipeline() + v3gate() + "</section>";
-}
-
-/* -------------------------------------------- Bulgular: 2.0 → 3.0 counts */
-var V3FX = null;
-function v3markCount(useStems) {
-  // Count marked words over every event's default pair, with the stem rule off or on.
-  var keep = CM3.FLAGS.stemMatch, keepShadow = V3.shadow, n = 0;
-  CM3.FLAGS.stemMatch = useStems; V3.shadow = false;
-  try {
-    D.E.forEach(function (e) {
-      var p = defaultPair(e); if (!p) return;
-      var c = compareHeads(artOf(e, p[0]), artOf(e, p[1])); n += c.markA.length + c.markB.length;
-    });
-  } finally { CM3.FLAGS.stemMatch = keep; V3.shadow = keepShadow; }
-  return n;
-}
-function v3fxRows() {
-  if (V3FX) return V3FX;
-  var n = v3N(), cl = CM3.clusters(D), ev = D.E.filter(function (e) { return !n.events[e.i].isIlan; }).length;
-  var l0 = CM3.pairedLoading(D, false), l1 = CM3.pairedLoading(D, true);
-  var row = function (k, a, b, dec) { return { k: k, a: a, b: b, dec: dec || 0, c: a ? 100 * (b - a) / a : 0 }; };
-  V3FX = [row("fxHeadlines", D.A.length, D.A.length - n.total), row("fxEvents", D.E.length, ev),
-    row("fxEventHeads", cl.total, cl.total - cl.copies), row("fxPanel", CM3.admittedSet(D, "old").length, CM3.admittedSet(D, "new").length),
-    row("fxMarks", v3markCount(false), v3markCount(true)), row("fxLoad", l0.diff, l1.diff, 2)];
-  return V3FX;
-}
-function v3num(x, dec) { return x.toLocaleString("tr", { minimumFractionDigits: dec, maximumFractionDigits: dec }); }
-function v3finding() {
-  var R = v3fxRows(), n = v3N();
-  return '<section class="find" data-cm3 id="cm3fx-sec"><div class="find-h"><div class="find-n">' + esc(t3("fxEyebrow")) + "</div><div>" +
-    "<h3>" + esc(t3("fxTitle")) + '</h3><div style="margin:14px 0 4px"><div class="bignum" style="color:var(--ink)">%' + CM3.pct1(n.total / D.A.length) +
-    '</div><div class="bignum-l">' + esc(t3("fxBigL")) + ' ' + v3est() + "</div></div>" +
-    '<p class="claim">' + esc(t3("fxClaim")) + '</p></div></div><div class="body">' + fig("cm3fx", t3("fxEb"), { take: esc(t3("fxTake")) }) +
-    '<div class="scroller panel" style="margin-top:12px"><table><thead><tr><th>' + esc(t3("fxMeasure")) + '</th><th class="r">' + esc(t3("fxBefore")) +
-    '</th><th class="r">' + esc(t3("fxAfter")) + '</th><th class="r">' + esc(t3("fxChange")) + "</th></tr></thead><tbody>" + R.map(function (r) {
-      return "<tr><td>" + esc(t3(r.k)) + '</td><td class="r num">' + v3num(r.a, r.dec) + '</td><td class="r num">' + v3num(r.b, r.dec) +
-        '</td><td class="r num">' + (r.c > 0 ? "+" : "") + v3num(r.c, 1) + "%</td></tr>";
-    }).join("") + "</tbody></table></div></div></section>";
-}
-function v3drawFinding() {
-  var box = document.getElementById("cm3fx"); if (!box) return;
-  box.appendChild(divergingBar(v3fxRows().map(function (r) {
-    return { label: t3(r.k), value: r.c, color: "var(--ink2)",
-      tip: "<span class='k'>" + esc(t3(r.k)) + "</span>" + esc(t3("fxTip", { a: v3num(r.a, r.dec), b: v3num(r.b, r.dec), c: v3num(r.c, 1) })) };
-  }), { padL: 300, padR: 64, max: Math.ceil(Math.max.apply(null, v3fxRows().map(function (r) { return Math.abs(r.c); })) * 1.6) }));
 }
 
 /* ------------------------------------------- review desk (ADR-001) */

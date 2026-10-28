@@ -51,7 +51,7 @@ var PARAMS = {
 };
 
 // All on at Aylin's request (15 Oct 2026). Reviewer gates are still open: see report.md.
-// evidence: the reading list, evidence gate and pipeline on Türkiye bağlamı / Yöntem, and the 2.0 → 3.0 finding on Bulgular.
+// evidence: the reading list, evidence gate and pipeline on Türkiye bağlamı / Yöntem.
 // attention: the home page's foil sticker, event switcher, phone-first hero and differing-word lines on cards.
 // register: the crawler's 53-outlet register on Panel sağlığı and Yöntem (no figure changes).
 // reviewDesk: Yönetim › Doğrulama masası and the status table on Yöntem (ADR-001).
@@ -204,21 +204,6 @@ var TR = {
   p8: "Sahip kaydı (T4)", p8d: "Aynı sahip kayıtlı kurumlar, kaynağı olduğunda tek sayılır.",
   p9: "Kayıt denetimi (T1)", p9d: "Yerleşim sayısı ile etiketi uyuşmayan kurumlar listelenir.",
   p10: "Kanıt kapısı", p10d: "Yerleşime ve sahipliğe hangi kaynağın dayanak olabileceği.",
-  // Bulgular: 3.0 before / after
-  fxEyebrow: "3.0",
-  fxTitle: "3.0 kuralları bu dönemin sayılarını nasıl değiştiriyor",
-  fxClaim: "Aynı veri 3.0 kurallarıyla yeniden sayıldı. Çubuk, 2.0 sayımına göre değişimi yüzde olarak gösterir; tabloda iki sayı da var. Bu bir doğruluk ölçüsü değildir; neyin sayıldığını gösterir.",
-  fxBigL: "başlık resmî ilan olarak ayrıldı",
-  fxEb: "2.0 sayımına göre değişim, %",
-  fxTake: "Resmî ilanlar ve benzer başlıklar ayrılınca sayılar küçülür; yüklü dil farkı neredeyse aynı kalır. Etkin kurum satırı denemedeki ölçüttür, sitede canlı değildir.",
-  fxHeadlines: "Haber başlığı (resmî ilanlar ayrıldı)",
-  fxEvents: "Olay listesi (ilan olayları ayrıldı)",
-  fxEventHeads: "Olay başlığı (benzer başlıklar bir kez)",
-  fxPanel: "Etkin kurum (yeni ölçüt, denemede)",
-  fxMarks: "İşaretli kelime (ek eşleme)",
-  fxLoad: "Yüklü dil farkı, sağ − sol",
-  fxMeasure: "Ölçü", fxBefore: "2.0", fxAfter: "3.0", fxChange: "Değişim",
-  fxTip: "2.0: {a} · 3.0: {b} · değişim %{c}",
   // Review desk (Yönetim › Doğrulama masası) and the status table on Yöntem
   deskTab: "Doğrulama masası",
   deskBar: "Doğrulama masasındaki cevaplar bu sayfanın ortak deposunda saklanır; sayfayı açabilen herkes görür ve sonuçlar kamu sayfalarındaki etiketleri değiştirebilir.",
