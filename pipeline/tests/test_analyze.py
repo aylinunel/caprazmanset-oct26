@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from capraz_pipeline.analyze import headline_lede_gap, jsd, lead_lag, mantel, overlap_matrix, phi_matrix
+from capraz_pipeline.analyze import active_outlets, advanced_outlets, headline_lede_gap, jsd, lead_lag, mantel, overlap_matrix, phi_matrix
 
 
 def art(i, s, d, v=5, lv=None, p=1):
@@ -19,6 +19,30 @@ class AnalyzeTest(unittest.TestCase):
         self.assertEqual(r["outlets"]["R2"]["medLag"], 120)        # first own headline counts, not the later one
         self.assertEqual(r["blocs"]["left>right"], {"n": 1, "coveredShare": 1.0, "medLag": 30})
         self.assertEqual(r["blocs"]["left>mid"]["coveredShare"], 0.0)
+
+    def test_activity_is_judged_from_each_outlets_first_day(self):
+        window = [f"2026-10-{d:02d}" for d in range(1, 21)]
+        arts = [art(f"o{d}", "OLD", f"{d}T09:00") for d in window[::2]]  # 10 of 20 days
+        arts += [art(f"n{d}", "NEW", f"{d}T09:00") for d in window[10:]]  # every day since 11 Oct
+        arts += [art(f"t{d}", "TINY", f"{d}T09:00") for d in window[-3:]]  # 3 days: under the 7-day floor
+        act, count, since = active_outlets(arts, {"OLD": 30, "NEW": 70, "TINY": 50}, window)
+        self.assertEqual(act, {"OLD", "NEW"})
+        self.assertEqual((count, since["NEW"]), ({"left": 1, "mid": 0, "right": 1}, "2026-10-11"))
+
+    def test_overlap_is_measured_over_the_period_both_outlets_were_collected(self):
+        ev_day = {f"e{i}": f"2026-10-{i:02d}" for i in range(1, 21)}
+        old = {f"e{i}" for i in range(1, 21, 2)}            # every other event, all month
+        late = {"e11", "e13", "e15", "e17"}                 # collected from 11 Oct
+        since = {"OLD": "2026-10-01", "LATE": "2026-10-11"}
+        whole = phi_matrix({"OLD": old, "LATE": late}, 20)["OLD"]["LATE"]
+        shared = phi_matrix({"OLD": old, "LATE": late}, 20, since, ev_day)["OLD"]["LATE"]
+        self.assertLess(whole, shared)  # September misses do not count against the late outlet
+        self.assertEqual(overlap_matrix({"OLD": old, "LATE": late}, since, ev_day)["OLD"]["LATE"], 1.0)
+
+    def test_low_sample_outlets_are_kept_and_marked(self):
+        om = {"BIG": {"events": 200, "n": 10, "pol": 50}, "LOW": {"events": 25, "n": 100, "pol": 50},
+              "NONE": {"events": 5, "n": 100, "pol": 50}}
+        self.assertEqual(advanced_outlets(om), (["BIG", "LOW"], ["LOW"]))
 
     def test_gap_is_headline_minus_lede_and_skips_missing_ledes(self):
         g = headline_lede_gap([{**art("a", "X", "2026-10-01T10:00", v=40, lv=5), "st": "s1"}, art("b", "X", "2026-10-01T10:00", v=5)], {"a": "lede"})

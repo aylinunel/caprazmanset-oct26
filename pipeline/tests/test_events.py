@@ -15,6 +15,16 @@ class EventsTest(unittest.TestCase):
         # Mirror case.
         self.assertEqual(blind_spot({"left": 5, "mid": 1, "right": 0}, active), "right")
 
+    def test_event_counts_only_outlets_whose_data_had_begun(self):
+        from collections import Counter
+        from capraz_pipeline.events import event_record
+        arts = {m: {"i": m, "s": s, "t": f"Deprem {m} haberi", "d": "2026-09-05T10:00", "v": 5}
+                for m, s in (("a", "L1"), ("b", "L2"), ("c", "R1"))}
+        lean = {"L1": 30, "L2": 30, "R1": 70, "R2": 70, "R3": 70}
+        since = {"L1": "2026-09-01", "L2": "2026-09-01", "R1": "2026-09-01", "R2": "2026-09-01", "R3": "2026-10-18"}
+        e = event_record("s1", ["a", "b", "c"], arts, lean, since, set(since), Counter(), 10, auto=True)
+        self.assertEqual(e["ns"], [67, 33])  # R3 starts 18 Oct: 1 of 2 right outlets, not 1 of 3
+
     def test_binom_cdf(self):
         self.assertAlmostEqual(binom_cdf(0, 5, 0.5), 1 / 32)
         self.assertAlmostEqual(binom_cdf(5, 5, 0.3), 1.0)

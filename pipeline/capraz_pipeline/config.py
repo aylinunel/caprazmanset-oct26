@@ -19,8 +19,10 @@ class Params:
     # Blocs (4.0, owner-confirmed 2026-10-28): lean < 45 left, > 55 right, otherwise middle.
     bloc_left_below: float = 45
     bloc_right_above: float = 55
-    # Active outlet: has articles on at least this share of the window's days (4.0: 20 of 40).
+    # Active outlet: has articles on at least this share of the days since its data begins, and on at
+    # least active_min_days days (5.1; 4.0 counted the whole window, which hid outlets added later).
     active_day_share: float = 0.5
+    active_min_days: int = 7
     # Event clustering (4.0, validated pair F1 0.848 at 0.33).
     cluster_threshold: float = 0.33
     cluster_window_hours: int = 48
@@ -36,7 +38,10 @@ class Params:
     # Agenda lead–lag: an outlet "follows" when it publishes within this many hours of the first.
     leadlag_horizon_hours: int = 48
     # Similarity map: outlets need this many event appearances to be placed.
-    similarity_min_events: int = 30
+    similarity_min_events: int = 20
+    # İleri analiz: outlets with at least this many events take part; below 150 events and 1,000
+    # political headlines they are shown with an "az veri" (low sample) mark.
+    adv_min_events: int = 20
     # Classifiers
     cv_folds: int = 5
     random_state: int = 20261028

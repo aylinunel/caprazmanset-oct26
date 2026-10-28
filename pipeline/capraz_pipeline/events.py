@@ -96,7 +96,7 @@ def stable_ids(groups: list[list[str]], previous: dict[str, list[str]], taken: s
 
 
 def build_events(arts: dict[str, dict], groups: list[list[str]], hand: list[dict],
-                 previous: dict[str, list[str]], lean: dict[str, float], active: dict[str, int],
+                 previous: dict[str, list[str]], lean: dict[str, float], since: dict[str, str],
                  active_set: set[str], df: Counter, n_docs: int) -> list[dict]:
     """arts: id -> {i (public id), s, t, d, v, ...}. groups: automatic events as article-id lists."""
     out = []
@@ -104,10 +104,10 @@ def build_events(arts: dict[str, dict], groups: list[list[str]], hand: list[dict
     groups = sorted(groups, key=lambda g: min(arts[m]["d"] for m in g))
     for gid, g in zip(stable_ids(groups, previous, hand_ids), groups):
         g = sorted(g, key=lambda m: arts[m]["d"])
-        out.append(event_record(gid, g, arts, lean, active, active_set, df, n_docs, auto=True))
+        out.append(event_record(gid, g, arts, lean, since, active_set, df, n_docs, auto=True))
     for h in hand:
         members = [m for m in h["members"] if m in arts]
-        e = event_record(h["refId"], sorted(members, key=lambda m: arts[m]["d"]), arts, lean, active,
+        e = event_record(h["refId"], sorted(members, key=lambda m: arts[m]["d"]), arts, lean, since,
                          active_set, df, n_docs, auto=False)
         # Supplied fields stay as supplied; only membership-derived counts are recomputed.
         for key in ("t", "sum", "tp", "pl", "c", "ent"):
@@ -119,12 +119,15 @@ def build_events(arts: dict[str, dict], groups: list[list[str]], hand: list[dict
     return out
 
 
-def event_record(eid, g, arts, lean, active, active_set, df, n_docs, auto):
+def event_record(eid, g, arts, lean, since, active_set, df, n_docs, auto):
     titles = [arts[m]["t"] for m in g]
+    # Outlets whose data had begun by the event's first headline could have covered it.
+    here = {s for s in active_set if since[s] <= arts[g[0]]["d"][:10]}
+    active = Counter(bloc(lean[s]) for s in here)
     rep_pos = near_duplicates(titles, list(range(len(g))))
     outlets = sorted({arts[m]["s"] for m in g})
     cover = Counter(bloc(lean.get(s)) for s in outlets)
-    cov_act = Counter(bloc(lean.get(s)) for s in outlets if s in active_set)
+    cov_act = Counter(bloc(lean.get(s)) for s in outlets if s in here)
     vs = [arts[m]["v"] for m in g]
     rate_l = cov_act["left"] / active["left"] if active.get("left") else 0
     rate_r = cov_act["right"] / active["right"] if active.get("right") else 0

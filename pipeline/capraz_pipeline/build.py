@@ -119,7 +119,7 @@ def build(root: Path, ref: Path, out: Path, since: str | None = None, until: str
     if validate:
         labelled = {json.loads(l)["id"] for l in gzip.open(ref / "labels.jsonl.gz", "rt")}
         report["cluster"] = cluster.pair_scores(groups, [t["members"] for t in refev["topics"]], labelled - locked)
-    act_set, act = an.active_outlets(arts, lean, len(days))
+    act_set, act, since = an.active_outlets(arts, lean, days)
     prev_path = out / "events-members.json"
     previous_pub = json.loads(prev_path.read_text()) if prev_path.exists() else {
         k: ["h" + m[:11] for m in v] for k, v in editorial["_eventMembers"].items()}
@@ -128,7 +128,7 @@ def build(root: Path, ref: Path, out: Path, since: str | None = None, until: str
     hand = [{**h, "members": [by_store[m]["i"] for m in h["members"] if m in by_store],
              "rep": {by_store[k]["i"]: by_store[v]["i"] for k, v in h.get("rep", {}).items()
                      if k in by_store and v in by_store}} for h in refev["hand"]]
-    E = ev.build_events(by_i, [pub(g) for g in groups], hand, previous_pub, lean, act, act_set, df, len(arts))
+    E = ev.build_events(by_i, [pub(g) for g in groups], hand, previous_pub, lean, since, act_set, df, len(arts))
 
     # event topics (hand events keep supplied topics)
     tr_docs = [" ".join(by_store[m]["t"] for m in t["members"] if m in by_store) for t in refev["topics"]]
@@ -148,8 +148,9 @@ def build(root: Path, ref: Path, out: Path, since: str | None = None, until: str
     for e in E:
         for s in e["s"]:
             event_sets[s].add(e["i"])
+    ev_day = {e["i"]: e["f"][:10] for e in E}
     vec = TfidfVectorizer(analyzer="char_wb", ngram_range=(3, 5), min_df=2, sublinear_tf=True).fit(tr_lower(a["t"]) for a in arts)
-    adv_out = an.advanced_outlets(om)
+    adv_out, adv_low = an.advanced_outlets(om)
     pol = [a for a in arts if a["p"]]
     # shortcut: the topic model needs a real corpus; tiny windows (tests, very short runs) skip it.
     topic_block = None
@@ -158,9 +159,10 @@ def build(root: Path, ref: Path, out: Path, since: str | None = None, until: str
         topic_block = an.topic_mix(pol, {a["i"]: int(t) for a, t in zip(pol, doc_theme)}, themes, lean, adv_out,
                                    days[0], days[-1], coh)
     V5 = {"leadLag": an.lead_lag(by_i, E, lean), "gap": an.headline_lede_gap(arts, ledes),
-          "similarity": an.similarity_map({s: event_sets[s] for s in act_set}, an.wording_similarity(by_i, E, vec), lean, len(E))}
-    ADV = {"agenda": an.agenda(event_sets, lean, adv_out), "pca": an.framing_pca(arts, lean, adv_out),
-           "topics": topic_block}
+          "similarity": an.similarity_map({s: event_sets[s] for s in act_set}, an.wording_similarity(by_i, E, vec), lean, len(E),
+                                          since, ev_day)}
+    ADV = {"agenda": an.agenda(event_sets, lean, adv_out, since, ev_day), "pca": an.framing_pca(arts, lean, adv_out),
+           "topics": topic_block, "low": adv_low}
 
     # write
     sources = sorted({a["s"] for a in arts})
@@ -189,6 +191,7 @@ def build(root: Path, ref: Path, out: Path, since: str | None = None, until: str
                    **ingest_totals(root)},
         "perDay": an.per_day(arts), "sources": sources,
         "v2": {"target": {"start": days[0], "end": days[-1]}, "active": act, "activeSet": sorted(act_set),
+               "since": {s: since[s] for s in sorted(act_set)},
                "missing": sorted(f["s"] for f in editorial["_feeds"] if f["s"] not in set(sources)),
                "hand": len(E) - len(auto), "stories": len(E), "clustered": sum(len(e["a"]) for e in E),
                "method": "TF-IDF (kelime 1-2 gram + karakter 3-5 gram) kosinüs benzerliği ≥ 0,33; yalnızca 48 saat "

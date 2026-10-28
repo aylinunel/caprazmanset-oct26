@@ -5,6 +5,7 @@ outlets, because collection volume differs by outlet and day.
 """
 from __future__ import annotations
 
+from bisect import bisect_left
 import math
 from collections import Counter, defaultdict
 from datetime import date, datetime, timedelta
@@ -26,14 +27,18 @@ def minutes(stamp: str) -> int:
 
 
 # ------------------------------------------------------------------ basics
-def active_outlets(arts: list[dict], lean: dict, n_days: int) -> tuple[set[str], dict[str, int]]:
+def active_outlets(arts: list[dict], lean: dict, window: list[str]) -> tuple[set[str], dict[str, int], dict[str, str]]:
+    """Active outlets, their bloc counts, and the day each one's data begins (events before that day
+    do not count the outlet as one that could have covered them)."""
     days = defaultdict(set)
     for a in arts:
         days[a["s"]].add(a["d"][:10])
-    need = math.ceil(PARAMS.active_day_share * n_days)
-    act = {s for s, d in days.items() if len(d) >= need and lean.get(s) is not None}
+    since = {s: min(d) for s, d in days.items()}
+    span = lambda s: sum(1 for d in window if d >= since[s])
+    need = lambda s: max(PARAMS.active_min_days, math.ceil(PARAMS.active_day_share * span(s)))
+    act = {s for s, d in days.items() if len(d) >= need(s) and lean.get(s) is not None}
     count = Counter(bloc(lean[s]) for s in act)
-    return act, {b: count.get(b, 0) for b in ("left", "mid", "right")}
+    return act, {b: count.get(b, 0) for b in ("left", "mid", "right")}, since
 
 
 def per_day(arts: list[dict]) -> dict[str, int]:
@@ -142,11 +147,29 @@ def headline_lede_gap(arts: list[dict], ledes: dict[str, str], top: int = 40) ->
             "n": sum(len(g) for g in by.values())}
 
 
-def overlap_matrix(sets: dict[str, set]) -> dict[str, dict[str, float]]:
-    """Overlap coefficient: shared / size of the smaller set (Jaccard would favour big archives)."""
-    keys = list(sets)
-    return {a: {b: round(len(sets[a] & sets[b]) / min(len(sets[a]), len(sets[b])), 3) if min(len(sets[a]), len(sets[b])) else 0.0
-                for b in keys} for a in keys}
+def shared_window(sets: dict[str, set], since: dict[str, str] | None, ev_day: dict[str, str] | None):
+    """Pair view: each outlet's events from the day both outlets' data had begun, and how many events
+    the window holds. Two outlets collected only in late October otherwise look alike by construction."""
+    days = sorted(ev_day.values()) if ev_day else []
+    def pair(a, b):
+        if not since or not ev_day:
+            return sets[a], sets[b], None
+        m = max(since.get(a, ""), since.get(b, ""))
+        cut = lambda s: {e for e in s if ev_day[e] >= m}
+        return cut(sets[a]), cut(sets[b]), len(days) - bisect_left(days, m)
+    return pair
+
+
+def overlap_matrix(sets: dict[str, set], since=None, ev_day=None) -> dict[str, dict[str, float]]:
+    """Overlap coefficient: shared / size of the smaller set (Jaccard would favour big archives),
+    over the period both outlets were collected."""
+    keys, pair = list(sets), shared_window(sets, since, ev_day)
+    out = {a: {} for a in keys}
+    for a in keys:
+        for b in keys:
+            x, y, _ = pair(a, b)
+            out[a][b] = round(len(x & y) / min(len(x), len(y)), 3) if min(len(x), len(y)) else 0.0
+    return out
 
 
 def mantel(d1: np.ndarray, d2: np.ndarray, seed: int = PARAMS.random_state) -> tuple[float, float]:
@@ -169,16 +192,18 @@ def perm_spearman(x, y, seed: int = PARAMS.random_state) -> tuple[float, float]:
     return round(rho, 3), round((hits + 1) / (PERMS + 1), 4)
 
 
-def phi_matrix(sets: dict[str, set], n_events: int) -> dict[str, dict[str, float]]:
+def phi_matrix(sets: dict[str, set], n_events: int, since=None, ev_day=None) -> dict[str, dict[str, float]]:
     """Phi correlation of two outlets' event-coverage vectors: unlike overlap or Jaccard it does not
-    pull every outlet towards the one that covers the most events."""
-    keys = list(sets)
+    pull every outlet towards the one that covers the most events. Computed over the shared window."""
+    keys, pair = list(sets), shared_window(sets, since, ev_day)
     out = {a: {} for a in keys}
     for a in keys:
         for b in keys:
-            na, nb, n11 = len(sets[a]), len(sets[b]), len(sets[a] & sets[b])
-            den = math.sqrt(na * nb * (n_events - na) * (n_events - nb))
-            out[a][b] = round((n11 * n_events - na * nb) / den, 4) if den else 0.0
+            x, y, n = pair(a, b)
+            n = n_events if n is None else n
+            na, nb, n11 = len(x), len(y), len(x & y)
+            den = math.sqrt(na * nb * (n - na) * (n - nb))
+            out[a][b] = round((n11 * n - na * nb) / den, 4) if den else 0.0
     return out
 
 
@@ -189,12 +214,13 @@ def _unit(m: np.ndarray) -> np.ndarray:
     return (m - lo) / (hi - lo) if hi > lo else np.zeros_like(m)
 
 
-def similarity_map(event_sets: dict[str, set], words: dict[str, dict[str, float]], lean: dict, n_events: int) -> dict | None:
+def similarity_map(event_sets: dict[str, set], words: dict[str, dict[str, float]], lean: dict, n_events: int,
+                   since=None, ev_day=None) -> dict | None:
     """Coverage (phi) + headline-wording similarity -> 2-D classical MDS coordinates + neighbours."""
     keys = [s for s in event_sets if len(event_sets[s]) >= PARAMS.similarity_min_events]
     if len(keys) < MIN_OUTLETS:
         return None
-    ov = phi_matrix({s: event_sets[s] for s in keys}, n_events)
+    ov = phi_matrix({s: event_sets[s] for s in keys}, n_events, since, ev_day)
     cov = _unit(np.array([[ov[a][b] for b in keys] for a in keys]))
     wm = np.array([[words.get(a, {}).get(b, np.nan) for b in keys] for a in keys])
     has = ~np.isnan(wm)
@@ -237,18 +263,21 @@ def wording_similarity(arts_by_i: dict, events: list[dict], vec) -> dict[str, di
 
 
 # ------------------------------------------------------------------ Bulgular › İleri analiz
-def advanced_outlets(om: dict, min_events: int = 150, min_political: int = 1000) -> list[str]:
-    return sorted(s for s, o in om.items() if o["events"] >= min_events or o["n"] * o["pol"] / 100 >= min_political)
+def advanced_outlets(om: dict, min_events: int = 150, min_political: int = 1000) -> tuple[list[str], list[str]]:
+    """Outlets in the advanced analyses, and those among them with a low sample."""
+    full = {s for s, o in om.items() if o["events"] >= min_events or o["n"] * o["pol"] / 100 >= min_political}
+    low = {s for s, o in om.items() if s not in full and o["events"] >= PARAMS.adv_min_events}
+    return sorted(full | low), sorted(low)
 
 
 MIN_OUTLETS = 4  # below this, correlations across outlets are not reported
 
 
-def agenda(event_sets: dict[str, set], lean: dict, outlets: list[str]) -> dict | None:
+def agenda(event_sets: dict[str, set], lean: dict, outlets: list[str], since=None, ev_day=None) -> dict | None:
     keys = [s for s in outlets if lean.get(s) is not None]
     if len(keys) < MIN_OUTLETS:
         return None
-    ov = overlap_matrix({s: event_sets.get(s, set()) for s in keys})
+    ov = overlap_matrix({s: event_sets.get(s, set()) for s in keys}, since, ev_day)
     D = np.array([[1 - ov[a][b] for b in keys] for a in keys])
     np.fill_diagonal(D, 0)
     order = [keys[i] for i in leaves_list(linkage(squareform(D, checks=False), "average"))]
