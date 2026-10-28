@@ -30,6 +30,7 @@ def main(argv=None) -> None:
     p.add_argument("--since")
     p.add_argument("--until")
     p.add_argument("--no-validate", action="store_true", help="skip cross-validation (faster live runs)")
+    p.add_argument("--fragment", action="store_true", help="page without html/head/body wrapper (claude.ai artifact)")
     a = p.parse_args(argv)
     if a.cmd in ("ingest", "run"):
         if not a.src:
@@ -39,7 +40,7 @@ def main(argv=None) -> None:
         r = build(a.root, a.ref, a.out, a.since, a.until, validate=not a.no_validate)
         print(json.dumps({k: r[k] for k in ("window", "seconds", "sizes") if k in r}))
     if a.cmd in ("site", "run"):
-        print(assemble(a.out, a.site))
+        print(assemble(a.out, a.site, fragment=a.fragment))
 
 
 if __name__ == "__main__":

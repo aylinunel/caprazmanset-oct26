@@ -13,7 +13,8 @@ from .config import REPO, SCORER
 SITE = REPO / "site"
 
 
-def assemble(data_dir: Path, dest: Path, title: str = "Çapraz Manşet 5.0") -> Path:
+def assemble(data_dir: Path, dest: Path, title: str = "Çapraz Manşet 5.0", fragment: bool = False) -> Path:
+    """fragment=True: no doctype/html/head/body wrapper (claude.ai artifacts add their own)."""
     rules = SCORER.read_text(encoding="utf-8")
     app = (SITE / "js" / "app.js").read_text(encoding="utf-8")
     assert "/*@@RULES@@*/" in app, "app.js lost its shared-rules marker"
@@ -30,6 +31,9 @@ def assemble(data_dir: Path, dest: Path, title: str = "Çapraz Manşet 5.0") -> 
         '<script type="text/x-cm">' + code((SITE / "js" / "turkish-layer.js").read_text(encoding="utf-8")) + "</script>",
         '<script type="text/x-cm">' + code(app) + "</script>",
         "</body>", "</html>", ""])
+    if fragment:
+        for tag in ("<!doctype html>", '<html lang="tr">', "<head>", "</head>", "<body>", "</body>", "</html>"):
+            html = html.replace(tag + "\n", "", 1)
     dest.mkdir(parents=True, exist_ok=True)
     (dest / "index.html").write_text(html, encoding="utf-8")
     if data_dir.resolve() != (dest / "data").resolve():

@@ -100,6 +100,10 @@ Source-preserving refactor of the supplied Çapraz Manşet 3.0 HTML, with a prot
 
 The public site retains the supplied event comparisons, source profiles, spectrum/atlas, framing and headline-rule analysis, historical findings, methodology, search, and personal reading views. The monolithic artifact is now divided into feature modules, assets, a pure analysis layer, server-side editorial records and a separate collector. The public renderer intentionally remains a transitional imperative runtime to preserve its extensive existing behavior; this is not a claim that all legacy design debt has disappeared.
 
+## Analysis pipeline (5.0)
+
+`pipeline/` rebuilds every score, label, event and analysis from the collected articles and assembles the static Çapraz Manşet 5.0 site. See [pipeline/README.md](pipeline/README.md) and [ADR-0002](docs/adr/0002-analysis-pipeline.md).
+
 ## Data and editorial boundaries
 
 The owner-provided historical snapshot contains 15,913 embedded headlines, 1,489 events and 29 source profiles. Its metadata separately reports 105,869 harvested items and 75,849 political items; those are not the number of headlines displayed. The collector registry contains 53 publishers, not a guarantee that every publisher is accessible.
