@@ -106,6 +106,10 @@ class Store:
             os.replace(tmp, self.path(day))
         return added, len(current)
 
+    def homes(self) -> dict[str, str]:
+        """Article id -> the day it is stored under (ids are unique across days)."""
+        return {r["id"]: d for d in self.days() for r in self.read_day(d)}
+
     def day_hash(self, day: str) -> str:
         p = self.path(day)
         return hashlib.sha256(p.read_bytes()).hexdigest() if p.exists() else ""

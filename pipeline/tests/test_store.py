@@ -43,5 +43,20 @@ class StoreTest(unittest.TestCase):
             self.assertEqual((r["title"], r["summary"]), ("Harita", "Spot."))  # first copy kept, its gap filled once
 
 
+class CrossDayTest(unittest.TestCase):
+    def test_a_story_whose_time_moves_across_midnight_is_stored_once(self):
+        # Two routes can disagree on the time zone; a 3-hour shift near midnight changes the day.
+        with tempfile.TemporaryDirectory() as tmp:
+            store = Store(Path(tmp, "store"))
+            row = '{"source":"mynet","url":"https://mynet.com/x","title":"A","published_at":"%s","summary":"%s"}'
+            for name, stamp, lede in (("a", "2026-09-02T20:20:00+00:00", ""), ("b", "2026-09-02T23:20:00+00:00", "Spot.")):
+                src = Path(tmp, name); src.mkdir()
+                Path(src, "articles.jsonl").write_text(row % (stamp, lede))
+                ingest(store, src)
+            rows = [r for d in store.days() for r in store.read_day(d)]
+            self.assertEqual(len(rows), 1)
+            self.assertEqual((rows[0]["day"], rows[0]["summary"]), ("2026-09-02", "Spot."))  # first copy's day, lede filled
+
+
 if __name__ == "__main__":
     unittest.main()

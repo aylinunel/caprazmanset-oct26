@@ -32,6 +32,9 @@ def collector_files(root: Path) -> list[Path]:
 def ingest(store: Store, root: Path, since: str | None = None, until: str | None = None) -> dict:
     stats: Counter = Counter()
     by_day: dict[str, dict[str, dict]] = defaultdict(dict)
+    # First copy wins across days too: routes can disagree on the time zone, and a few hours'
+    # shift near midnight would otherwise store one story under two days.
+    home = store.homes()
     for path in collector_files(root):
         for line in _lines(path):
             stats["read"] += 1
@@ -52,6 +55,7 @@ def ingest(store: Store, root: Path, since: str | None = None, until: str | None
                 stats["out_of_window"] += 1
                 continue
             rid = article_id(raw["url"])
+            day = home.setdefault(rid, day)
             if rid in by_day[day]:
                 stats["duplicate"] += 1
                 kept = by_day[day][rid]  # first copy wins; a later one may only fill its missing lede
