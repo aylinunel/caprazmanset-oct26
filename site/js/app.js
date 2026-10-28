@@ -4365,7 +4365,7 @@ function srcName(s) { return SRC[s] ? SRC[s].n : s; }
 /* İleri analiz keeps low-sample outlets (ADV.low) and marks them instead of hiding them. */
 var ADVLOW = {}; ((D.ADV && D.ADV.low) || []).forEach(function (s) { ADVLOW[s] = 1; });
 function advName(s) { return srcName(s) + (ADVLOW[s] ? " · az veri" : ""); }
-function leanTxt(p) { return p && p.lean != null ? p.lean + (p.leanSrc ? " (öneri)" : "") : "—"; }
+function leanTxt(p) { return p && p.lean != null ? p.lean + (p.leanSrc ? " (öneri, onaylı)" : "") : "—"; }
 function covOf(e) { return e.cov || [0, 0, 0]; }
 function covPct(e) {
   var c = covOf(e), t = c[0] + c[1] + c[2] || 1;
@@ -4943,7 +4943,7 @@ function pgSourceV2(q) {
   var v1 = pgSourceV1(q), k = q.s, om = (D.OM || {})[k], p = SRC[k];
   if (!p || !STAT[k]) return v1;
   var o = ownOf(k), sd = sideOf(k);
-  var block = '<div class="xsrc-top"><span class="xlean ' + sd + '">' + SIDE[sd] + " · yerleşim " + p.lean + "/100" + (p.leanSrc ? " · Claude önerisi, doğrulanmadı" : "") + "</span>" +
+  var block = '<div class="xsrc-top"><span class="xlean ' + sd + '">' + SIDE[sd] + " · yerleşim " + p.lean + "/100" + (p.leanSrc ? " · Claude önerisi, sahibi onayladı" : "") + "</span>" +
     '<span class="xsmall">' + esc(o[0]) + " · " + esc(o[1]) + "</span>" + followBtn("s", k) + "</div>";
   if (om) {
     var mine = D.E.filter(function (e) { return e.s.indexOf(k) >= 0; });
