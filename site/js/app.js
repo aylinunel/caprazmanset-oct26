@@ -3648,7 +3648,7 @@ function findingsCompute() {
   var sig = [];
   LIVE.forEach(function (sl) {
     var mine = polOf(sl);
-    if (mine.length < 20) return;
+    if (mine.length < 20 || !SRC[sl]) return; // the table shows name and placement: profiled outlets only
     var c = {}; mine.forEach(function (a) { a.k.forEach(function (k) { c[k] = (c[k] || 0) + 1; }); });
     Object.keys(c).forEach(function (k) {
       if (c[k] < 4) return;
