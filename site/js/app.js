@@ -6304,7 +6304,9 @@ function pgPace5() {
   h += '<section class="find"><div class="find-h"><div class="find-n">C</div><div><h3>Benzerlik haritası</h3>' +
     '<p class="claim">Kurumlar, <b>aynı olayları seçme</b> (phi korelasyonu; çok olay veren kurumu herkese yakın göstermez) ve <b>aynı olayda benzer sözcüklerle başlık atma</b> (karakter n-gram kosinüsü) ' +
     "ortalamasına göre yerleştirildi. Yakın duran kurumlar benzer haber davranışı gösteriyor; bu bir siyasi yerleşim değildir. Benzerlik ile kayıt defterindeki yerleşim farkı arasındaki ilişki " +
-    "<b>r = " + dec(SM.mantel_r, 2) + "</b> (Mantel, p = " + dec(SM.mantel_p, 3) + ").</p></div></div><div class=\"body\">" +
+    "<b>r = " + dec(SM.mantel_r, 2) + "</b> (Mantel, p = " + dec(SM.mantel_p, 3) + "): " +
+    (SM.mantel_p < .05 ? "yerleşimde yakın kurumlar haber davranışında da biraz daha yakın; ilişki anlamlı ama zayıf." : "yerleşimde yakın olmak, haber davranışında yakın olmakla anlamlı biçimde ilişkili değil.") +
+    "</p></div></div><div class=\"body\">" +
     fig("v5sim", "benzerlik haritası · nokta rengi kayıt defterindeki yerleşim", {
       legend: legendHTML([{ c: "var(--left)", t: "sola yerleşik" }, { c: "var(--mid)", t: "merkez" }, { c: "var(--right)", t: "sağa yerleşik" }]),
       take: "Çizgiler her kurumu en benzer üç kurumuna bağlar. Eksenlerin kendi anlamı yoktur; yalnızca uzaklıklar okunur." }) + "</div></section>";
@@ -6378,16 +6380,16 @@ function v5NarrAuto() {
 /* Limitations that depend on the data: written from it. */
 function limits5() {
   var miss = (V2.missing || []).concat(LIVE.filter(function (s) { return V2.activeSet && V2.activeSet.indexOf(s) < 0; }));
-  var mb = { left: 0, mid: 0, right: 0 }; miss.forEach(function (s) { var b = sideOf(s); if (mb[b] != null) mb[b]++; });
+  var mb = { left: 0, mid: 0, right: 0 }, none = 0; miss.forEach(function (s) { var b = sideOf(s); if (mb[b] != null && SRC[s] && SRC[s].lean != null) mb[b]++; else none++; });
   var big = Object.keys(mb).sort(function (a, b) { return mb[b] - mb[a]; });
   var T = ADV && ADV.topics, nT = T ? T.rho.length : 0, sigT = T ? T.rho.filter(function (r) { return r[1] < .05; }).length : 0;
   var nU = ADV && ADV.agenda ? ADV.agenda.order.length : ACT5.length;
   return "<li><b>Kapsama dengesizliği:</b> Verisi olmayan ya da dönemin yarısından azını kapsayan " + miss.length + " kurumun " + mb.left + "'" + CM3.trSuffix(mb.left) + " sol, " +
-      mb.mid + "'" + CM3.trSuffix(mb.mid) + " merkez, " + mb.right + "'" + CM3.trSuffix(mb.right) + " sağ yerleşimli" + (mb[big[0]] > mb[big[2]] ? " (ağırlık " + { left: "solda", mid: "merkezde", right: "sağda" }[big[0]] + ")" : "") +
+      mb.mid + "'" + CM3.trSuffix(mb.mid) + " merkez, " + mb.right + "'" + CM3.trSuffix(mb.right) + " sağ yerleşimli" + (none ? ", " + none + "'" + CM3.trSuffix(none) + " yerleşimsiz" : "") + (mb[big[0]] > mb[big[2]] ? " (ağırlık " + { left: "solda", mid: "merkezde", right: "sağda" }[big[0]] + ")" : "") +
       "; kör nokta ve gündem bulguları bundan etkilenebilir.</li>" +
     "<li><b>Küçük örneklem:</b> Kurum düzeyindeki testler " + nU + " birime dayanır; anlamlı olmayan sonuçlar “ilişki yok” değil “saptanamadı” biçiminde okunmalıdır.</li>" +
     (nT ? "<li><b>Çoklu karşılaştırma:</b> Tema–yerleşim ilişkileri " + nT + " ayrı test içerir ve düzeltme uygulanmamıştır; " +
-      (sigT ? sigT + " tanesi %5 eşiğini geçiyor, bunlar bu nedenle temkinle okunmalıdır." : "hiçbiri zaten %5 eşiğini geçmemiştir.") + "</li>" : "");
+      (sigT ? sigT + " tanesi %5 eşiğini geçiyor; " + (sigT > 1 ? "bunlar" : "bu sonuç") + " bu nedenle temkinle okunmalıdır." : "hiçbiri zaten %5 eşiğini geçmemiştir.") + "</li>" : "");
 }
 function v5Method() {
   var V = D.meta.validation || {}, C = V.classify || {}, K = V.cluster || {}, T = V.eventTopics || {}, P = D.meta.params || {}, c = D.meta.counts;
