@@ -3592,7 +3592,14 @@ function registerCheck() {
 }
 
 var FINDINGS = null;
-function findings() { return FINDINGS || (FINDINGS = findingsCompute()); }
+function findings() {
+  if (FINDINGS) return FINDINGS;
+  FINDINGS = findingsCompute().filter(Boolean);
+  FINDINGS.forEach(function (f, i) { f.id = f.n; f.n = (i < 9 ? "0" : "") + (i + 1); });
+  return FINDINGS;
+}
+/* Display number of a finding by its fixed id (findings that do not apply are left out, so numbers shift). */
+function findNo(id) { var f = findings().filter(function (x) { return x.id === id; })[0]; return f ? f.n : id; }
 function findingsCompute() {
   var out = [];
   var pol = POL;
@@ -3604,11 +3611,11 @@ function findingsCompute() {
   var words = {};
   arts[0].e.forEach(function (x) { String(x[1] || "").split(", ").forEach(function (w) { words[w.trim()] = 1; }); });
   out.push({ n: "01", big: ev.p, bigl: "puanlık fark",
-    title: "Tek kelime, " + ev.p + " puan",
-    claim: "Aynı açıklamayı veren " + ev.s.length + " kurumdan " +
+    title: (Object.keys(words).length > 1 ? "Birkaç kelime, " : "Tek kelime, ") + ev.p + " puan",
+    claim: "Aynı olayı veren " + ev.s.length + " kurumdan " +
       esc(SRC[arts[0].s].n) + " <b>" + arts[0].v + "</b>, " +
       esc(SRC[arts[arts.length - 1].s].n) + " <b>" + arts[arts.length - 1].v +
-      "</b> puan aldı. Farkı yaratan olgu değil, tek bir sözcük: <b>“" +
+      "</b> puan aldı. Farkı yaratan olgu değil, " + (Object.keys(words).length > 1 ? "birkaç sözcük" : "tek bir sözcük") + ": <b>“" +
       esc(Object.keys(words).join("”, “")) + "”</b>. Bu sözcük iki yapıyı birden tetikliyor — " +
       "kurumun kendi sesiyle bir aktöre sıfat yakıştırması, ve o sıfatın arka plan olgusu " +
       "gibi tekrarlanması.",
@@ -5167,7 +5174,7 @@ function pgNarrative(q) {
   /* week strip: overview first, then weeks, v1 archive last */
   var strip = [{ k: "all", l: "Tüm haftalar", n: shown + " olay" }].concat(weeks.map(function (w) {
     return { k: w.k, l: w.l, n: w.keys.length + " olay" }; })).concat(NW.filter(function (w) { return w.k === "v1"; }).map(function (w) {
-    return { k: "v1", l: "v1 arşivi", n: w.keys.length + " olay" }; }));
+    return { k: "v1", l: "1–8 Eylül arşivi", n: w.keys.length + " olay" }; }));
   h += '<div class="xweeks" role="tablist">' + strip.map(function (w) {
     return '<a class="xweek' + (w.k === NARRW ? " on" : "") + '" href="#/anlati?w=' + w.k + '" role="tab" aria-selected="' +
       (w.k === NARRW) + '"><b>' + esc(w.l) + "</b><span>" + w.n + "</span></a>";
@@ -5197,7 +5204,7 @@ function pgNarrative(q) {
       take: "Bir satırda tek renk varsa, o aktörü yalnızca tek bir blok sorumlu tutuyor demektir." }) +
     '<p class="xhint" id="cblame-n"></p></section>';
   h += '<div class="note warn" style="margin-top:22px"><b>Kodlama.</b> ' +
-    (isV1 ? "v1 arşivi (1–8 Eylül): dört olay elle, diğerleri makine desteğiyle kodlandı; burada yalnızca en az beş " +
+    (isV1 ? "1–8 Eylül arşivi: dört olay elle, diğerleri makine desteğiyle kodlandı; burada yalnızca en az beş " +
       "kurumu olan ve iki boyutta ayrışan olaylar gösteriliyor. " :
       "Başlıklardan, tek kodlayıcıyla elle kodlandı; boş hücre “başlıkta yok” demektir. Seçim kuralı ve ölçüt için " +
       '<a class="lnk" href="#/yontem?s=6">Yöntem § 6</a>. ') +
@@ -5318,8 +5325,8 @@ function pgFindings(q) {
   var h = '<div class="wrap page"><div class="phead"><div class="eyebrow">Bulgular · temel</div>' +
     "<h1>" + WIN.days + " günün haberleri ne gösterdi</h1>" +
     '<p class="lede">' + WIN.range + ' arasında toplanan <b>' + m.articles.toLocaleString("tr") +
-    "</b> başlıktan, en az beş kurumun verdiği <b>" + D.E.length.toLocaleString("tr") + " olaya</b> giren <b>" +
-    D.A.length.toLocaleString("tr") + "</b> başlık üzerine " + F.length + " sonuç. Hepsi sayfa açıldığı anda bu " +
+    "</b> başlık ve bunların en az beş kurumun verdiği <b>" + D.E.length.toLocaleString("tr") + " olayda</b> toplanan <b>" +
+    D.E.reduce(function (t, e) { return t + e.n; }, 0).toLocaleString("tr") + "</b> tanesi üzerine " + F.length + " sonuç. Hepsi sayfa açıldığı anda bu " +
     "verilerden hesaplanıyor. Bazıları çarpıcı, bazıları <b>sıfır</b> — ve sıfır olanlar da bulgudur.</p></div>";
   F.forEach(function (f) {
     h += '<section class="find"><div class="find-h"><div class="find-n">' + f.n + "</div><div>" +
@@ -5359,13 +5366,13 @@ function finding03() {
   return { n: "03", big: bs.length, bigl: "kör nokta · " + big.toLocaleString("tr") + " olayda", null: bs.length / big < .03,
     title: "Kör nokta var, ama ham sayımın söylediğinin küçük bir kesri",
     claim: "Bir tarafın kurumlarından hiçbirinin vermediği olayları saymak, <b>" + raw + "</b> “kör nokta” " +
-      "üretiyor. Ama kayıt defterindeki aktif kurumların " + act.right + "'u sağda, yalnızca " + act.left +
-      "'i solda: sol taraf bir olayı tamamen kaçırmaya aritmetik olarak çok daha yatkın. Taraf başına " +
+      "üretiyor. Ama kayıt defterindeki etkin kurumların " + act.right + sufNum(act.right) + " sağda, yalnızca " + act.left +
+      sufNum(act.left) + " solda: sol taraf bir olayı tamamen kaçırmaya aritmetik olarak çok daha yatkın. Taraf başına " +
       "normalize edilip şansla açıklanabilecek durumlar (binom testi, p &lt; 0,10) çıkarıldığında geriye <b>" +
-      bs.length + " olay</b> kalıyor — " + big.toLocaleString("tr") + " olayın %" + (100 * bs.length / big).toFixed(1) +
-      "'i. <b>" + bl + "</b> tanesi sol kurumların, <b>" + br + "</b> tanesi sağ kurumların görmediği olaylar. " +
+      bs.length + " olay</b> kalıyor — " + big.toLocaleString("tr") + " olayın %" + (100 * bs.length / big).toFixed(1).replace(".", ",") +
+      sufNum((100 * bs.length / big).toFixed(1).replace(".", ",")) + ". <b>" + bl + "</b> tanesi sol kurumların, <b>" + br + "</b> tanesi sağ kurumların görmediği olaylar. " +
       "Ayrışma büyük ölçüde olayın <b>seçiminde</b> değil, <b>anlatımında</b>.",
-    note: "<b>Ham sayım neden yanıltıcı:</b> beş sol kuruma karşı dokuz sağ kurum varken, sıradan bir olayın " +
+    note: "<b>Ham sayım neden yanıltıcı:</b> " + act.left + " sol kuruma karşı " + act.right + " sağ kurum varken, sıradan bir olayın " +
       "solda hiç görünmemesi editoryal bir tercih olmadan da sık olur. Kural ve test için " +
       '<a class="lnk" href="#/yontem?s=5">Yöntem › Olaylar ve kör nokta</a>; olayların listesi ' +
       '<a class="lnk" href="#/olaylar?t=kor">Kör noktalar</a> sekmesinde.',
@@ -5401,7 +5408,7 @@ function finding07() {
         return { label: nm, value: f.w || 0, display: f.w ? f.w + " gün" : "erişilemedi",
           color: !f.w ? "var(--line2)" : f.w >= WIN.half ? lean(SRC[f.s] ? SRC[f.s].lean : null) : "var(--seq1)",
           tip: "<span class='k'>" + esc(nm) + "</span>" + (f.n || 0).toLocaleString("tr") + " başlık · " + (f.w || 0) + " gün" };
-      }), { padL: 128, max: 40, axis: "kapsanan gün" });
+      }), { padL: 128, max: WIN.days, axis: "kapsanan gün" });
     },
     legend: [{ c: "var(--left)", t: "sola yerleşik, yeterli arşiv" }, { c: "var(--mid)", t: "merkez" },
       { c: "var(--right)", t: "sağa yerleşik" }, { c: "var(--seq1)", t: "seyrek arşiv (<" + WIN.half + " gün)" }],
@@ -5486,8 +5493,8 @@ function pgAdvanced() {
     "sıralama, kayıt defterindeki yerleşimle <b>ρ = " + P.rho1.toFixed(2) + "</b> (Spearman, permütasyon p = " +
     P.p1.toFixed(3) + ")" + (pcSig ? " ilişkili: <b>" + pcSide + " yerleşik kurumlar bu yapılara daha sık başvuruyor</b>" : "; bu ilişki şansla açıklanabilir düzeyde") +
     ". İkinci bileşen (%" + Math.round(100 * P["var"][1]) + ") yerleşimle " + (pc2Sig ? "ilişkili" : "ilişkisiz") + " (ρ = " + P.rho2.toFixed(2) + ", p = " + P.p2.toFixed(3) + ").</p></div></div>" +
-    '<div class="body"><div class="note warn" style="margin-bottom:14px"><b>Temel bulgular 10 ile çelişiyor mu?</b> ' +
-    "Bulgu 10 bütün yapıları eşit ağırlıkla toplayıp çift mesafesine bakıyor. PCA ise yapıların <b>birlikte</b> değiştiği " +
+    '<div class="body"><div class="note warn" style="margin-bottom:14px"><b>Temel bulgular " + findNo("10") + " ile çelişiyor mu?</b> ' +
+    "Bulgu " + findNo("10") + " bütün yapıları eşit ağırlıkla toplayıp çift mesafesine bakıyor. PCA ise yapıların <b>birlikte</b> değiştiği " +
     "yönü arıyor; iki ölçüm aynı veriyi farklı açılardan özetler, birbirinin yerine geçmez." + pcOdd() + "</div>" +
     fig("adv-b", "1. bileşen × 2. bileşen · nokta rengi yerleşim", {
       legend: legendHTML([{ c: "var(--left)", t: "sola yerleşik" }, { c: "var(--mid)", t: "merkez" }, { c: "var(--right)", t: "sağa yerleşik" }]),
@@ -5520,8 +5527,7 @@ function pgAdvanced() {
     "(Latent Dirichlet Allocation) denendi. LDA her belgenin birkaç konunun karışımı olduğunu varsayar; ortalama " +
     "sekiz kelimelik bir başlıkta bu varsayım çöküyor ve konuların ortalama tutarlılığı (NPMI) " + nfmt(T.lda_npmi) +
     " çıktı — anlamsız kelime yığınları. Aynı model ailesinin kısa metin sürümü olan <b>Dirichlet çok terimli " +
-    "karışımı</b> (GSDMM; her başlığa tek konu) tutarlılığı " + nfmt(T.dmm_npmi) + "'a çıkardı. 4.0'da 40 konu sözcük listeleri okunarak " +
-    "elle temalara toplanmıştı; 5.0'da her yeni konu, sözcükleri en çok örtüşen 4.0 konusunun temasına otomatik bağlandı. Her temanın kelimeleri aşağıda, kontrol edilebilir.</div>" +
+    "karışımı</b> (GSDMM; her başlığa tek konu) tutarlılığı " + nfmt(T.dmm_npmi) + "'a çıkardı. Her konu, sözcükleri en çok örtüşen referans temaya otomatik bağlandı. Her temanın kelimeleri aşağıda, kontrol edilebilir.</div>" +
     fig("adv-c1", "kurum × tema · ortalamaya göre fazla (koyu) ya da az (açık)", {
       take: "Bir hücre koyuysa o kurum bu temaya ortalamadan fazla yer veriyor. Sütunlarda sol ve sağ kurumlar " +
         "karışık koyulaşıyorsa, tema tercihi yerleşime bağlı değil demektir." }) +
@@ -5686,7 +5692,7 @@ function polarNote(PF, r) {
   });
   return "<b>Neden eğri, neden düz çizgi değil.</b> Aynı veriye <b>düz bir çizgi</b> uydurulduğunda R² = " +
     lin.toFixed(2) + "; parabol R² = " + PF.R2.toFixed(2) + ". Bir çukurun içinden geçen düz çizgi yataydır, " +
-    "bu yüzden v1 ilk sürümünde bu ilişkiyi yanlışlıkla “yok” diye raporlamıştı. " +
+    "bu yüzden yalnızca düz çizgiye bakan bir test bu ilişkiyi “yok” diye okur. " +
     (worst ? "<b>Eğrinin en çok yaslandığı kurum " + esc(SRC[worst.k] ? SRC[worst.k].n : worst.k) +
       "</b>: o çıkarıldığında R² " + worst.R2.toFixed(2) + "'ye düşüyor. " : "") +
     (allPos ? "Yönü dayanıklı — hangi kurum çıkarılırsa çıkarılsın parabolün katsayısı pozitif kalıyor. " :
@@ -5713,7 +5719,7 @@ function methodPaper() {
     [6, "Anlatı çözümlemesi"], [7, "İleri analizler"], [8, "Renk kodlaması"], [9, "Sınırlılıklar"], [10, "Etik"]];
   var h = '<div class="wrap page"><div class="phead"><div class="eyebrow">Yöntem</div>' +
     "<h1>Yöntem</h1>" +
-    '<p class="lede">Çapraz Manşet 2.0’ın veri toplama, olay tespiti, ölçüm ve çözümleme adımlarının akademik bir yöntem bölümü biçiminde dökümü.</p>' +
+    '<p class="lede">Çapraz Manşet’in veri toplama, olay tespiti, ölçüm ve çözümleme adımlarının akademik bir yöntem bölümü biçiminde dökümü.</p>' +
     '<nav class="xtoc">' + toc.map(function (t) { return '<a href="#/yontem?s=' + t[0] + '">' + t[0] + " · " + t[1] + "</a>"; }).join("") + "</nav></div>";
   h += '<article class="xpaper">';
   h += '<div class="abs"><p><b>Özet.</b> Bu çalışma, ' + WIN.range + ' döneminde ' + D.meta.sources.length + " Türk haber kuruluşunun " +
@@ -5734,7 +5740,7 @@ function methodPaper() {
     "ilgili mi gösteriyor?</li></ol>";
 
   h += sec(2, "Derlem") +
-    "<h3>2.1 Kaynak evreni</h3><p>Kaynak evreni, v1 ile aynı " + (D.FD || []).length + " kurumdan oluşan kayıt defteridir. Her kuruma " +
+    "<h3>2.1 Kaynak evreni</h3><p>Kaynak evreni, " + (D.FD || []).length + " kurumdan oluşan kayıt defteridir. Her kuruma " +
     "0 (sol) – 100 (sağ) arasında bir siyasi yerleşim değeri atanmıştır; bu değerler projeye <b>sağlanmış veridir</b> ve bu çalışmada " +
     "bağımsız olarak doğrulanmamıştır. Çözümlemelerde kurumlar yerleşime göre üç bloğa ayrılır: yerleşimi 45’in altı sol, 55’in üstü " +
     "sağ, arası merkez.</p>" +
@@ -5767,11 +5773,11 @@ function methodPaper() {
     "birleşmesi mümkündür ve kümeler editoryal olarak doğrulanmamıştır.</p>";
 
   h += sec(4, "Yüklü dil ölçümü") +
-    "<p>Her başlık v1’in kural tabanlı çözümleyicisiyle puanlanmıştır. Çözümleyici, bir sözlükçe ve sözdizimsel kalıplar aracılığıyla " +
+    "<p>Her başlık sitenin kural tabanlı çözümleyicisiyle puanlanmıştır. Çözümleyici, bir sözlükçe ve sözdizimsel kalıplar aracılığıyla " +
     "başlıkta tetiklenen çerçeveleme yapılarını (ör. ad hominem, korku çağrısı, metaforik çerçeveleme) ve bunların kanıt sözcüklerini " +
     "belirler, ardından 0–100 arası bir yoğunluk puanı üretir. Puan altı banda ayrılır: haber dili (≤9), deyimsel (≤24), yüklü (≤44), " +
-    "çerçevelenmiş (≤64), saldırı (≤84) ve sürekli (>84). Aynı kodun v1 verisini yeniden puanladığında v1 sonuçlarının %95’ini birebir " +
-    "verdiği doğrulanmıştır. Sözlük tabanlı yöntemlerin haber dilinde sınırlı geçerliliği bilinmektedir (Hamborg, 2023); bu nedenle " +
+    "çerçevelenmiş (≤64), saldırı (≤84) ve sürekli (>84). Aynı kural dosyası sağlanan referans derlemdeki " + (D.meta.rules.refHeadlines || 0).toLocaleString("tr") + " kayıtlı puanın " +
+    "tamamını birebir üretir. Sözlük tabanlı yöntemlerin haber dilinde sınırlı geçerliliği bilinmektedir (Hamborg, 2023); bu nedenle " +
     "puanlar kurumların mutlak yanlılığı olarak değil, <b>aynı olay içinde</b> karşılaştırma amacıyla kullanılmıştır.</p>";
 
   h += sec(5, "Kapsama asimetrisi ve kör nokta") +
@@ -5835,7 +5841,7 @@ function methodPaper() {
 
   h += v5Method();
   h += sec(9, "Sınırlılıklar") + "<ol>" +
-    "<li><b>Başlık düzeyi:</b> Ölçümler başlıklara ve (5.0'da) spotlara dayanır; haber metninin tamamı incelenmemiştir. Başlık-tek yanlılık tahmininin tam metin " +
+    "<li><b>Başlık düzeyi:</b> Ölçümler başlıklara ve spotlara dayanır; haber metninin tamamı incelenmemiştir. Başlık-tek yanlılık tahmininin tam metin " +
     "çözümlemesiyle tutarsız olabildiği bilinmektedir (Hamborg, 2023).</li>" +
     "<li><b>Güvenirlik:</b> Anlatı kodlaması tek kodlayıcıyla yapılmıştır; kodlayıcılar arası güvenirlik (ör. Krippendorff’un α’sı; " +
     "Krippendorff, 2018) ölçülmemiştir.</li>" +
@@ -6351,7 +6357,7 @@ function pgRanking5(q) {
         RANK5.map(function (c) { return '<td class="r num">' + c[3](r[c[0]]) + "</td>"; }).join("") +
         '<td class="xsmall">' + r.nb.map(function (s) { return esc(srcName(s)); }).join(", ") + "</td></tr>";
     }).join("") + "</tbody></table></div>";
-  return h + '<p class="xsmall" style="margin-top:8px">Tanımlar ve hesaplama: <a class="lnk" href="#/yontem?s=v5">Yöntem › 5.0 analizleri</a>.</p>';
+  return h + '<p class="xsmall" style="margin-top:8px">Tanımlar ve hesaplama: <a class="lnk" href="#/yontem?s=v5">Yöntem › Veri hattı ve analizler</a>.</p>';
 }
 
 /* Outlet profile: the same measures against the median active outlet. */
@@ -6359,7 +6365,7 @@ function v5Profile(k) {
   var r = rank5Rows().filter(function (x) { return x.s === k; })[0];
   if (!r) return "";
   var all = rank5Rows();
-  return '<section class="sec" style="margin-top:18px"><h2>5.0 ölçüleri</h2><p class="sub">Bu kurumun değeri ve etkin kurumların medyanı. ' +
+  return '<section class="sec" style="margin-top:18px"><h2>Kurumun ölçüleri</h2><p class="sub">Bu kurumun değeri ve etkin kurumların medyanı. ' +
     '<a class="lnk" href="#/kurumlar?t=siralama">Bütün kurumlarla sıralama →</a></p><div class="scroller panel"><table><tbody>' +
     RANK5.map(function (c) {
       return "<tr><td>" + esc(c[1]) + '<div class="xsmall">' + esc(c[2]) + '</div></td><td class="r num"><b>' + c[3](r[c[0]]) +
@@ -6488,24 +6494,24 @@ function limits5() {
 }
 function v5Method() {
   var V = D.meta.validation || {}, C = V.classify || {}, K = V.cluster || {}, T = V.eventTopics || {}, P = D.meta.params || {}, c = D.meta.counts;
-  return '<section class="sec" id="sv5"><h2>5.0 veri hattı ve analizleri</h2>' +
-    "<p>5.0, toplanan <b>bütün</b> haberleri kullanır: " + c.articles.toLocaleString("tr") + " haber (" + c.ledes.toLocaleString("tr") + " tanesinin spotuyla), " +
-    D.meta.sources.length + " kurum, " + WIN.range + ". Örneklem alınmadı. Analizlerin tamamı açık kaynaklı, yeniden üretilebilir bir veri hattıyla yeniden hesaplandı " +
-    "(aylinunel/caprazmanset-oct26 · <span class=\"mono\">pipeline/</span>, ADR-0002): toplama çıktısı gün gün saklanır, her aşama yalnızca değişen günleri yeniden hesaplar.</p>" +
+  return '<section class="sec" id="sv5"><h2>Veri hattı ve analizler</h2>' +
+    "<p>Site, toplanan <b>bütün</b> haberleri kullanır: " + c.articles.toLocaleString("tr") + " haber (" + c.ledes.toLocaleString("tr") + " tanesinin spotuyla), " +
+    D.meta.sources.length + " kurum, " + WIN.range + ". Örneklem alınmadı. Bütün analizler açık kaynaklı, yeniden üretilebilir bir veri hattıyla hesaplanır " +
+    "(aylinunel/caprazmanset-oct26 · <span class=\"mono\">pipeline/</span>, ADR-0002): toplama çıktısı gün gün saklanır, yeni veri geldiğinde her aşama yalnızca değişen günleri yeniden hesaplar.</p>" +
     "<p><b>Toplama hacmi.</b> Kurumdan kuruma ve günden güne toplanan haber sayısı farklıdır. Bu yüzden kurumlar arasındaki bütün karşılaştırmalar kurumun kendi haberlerinin payı ya da ortalaması üzerinden yapılır; ham sayılar karşılaştırılmaz.</p>" +
-    "<p><b>Puanlama.</b> Başlıklar ve spotlar, sitedeki çözümleyicinin <b>aynı</b> kural dosyasıyla puanlandı (shared/analysis/rules.cjs). Bu dosya 4.0'ın sakladığı 22.213 puanın tamamını birebir üretir. " +
-    "Kanıt gücü (güçlü / orta / zayıf) çözümleyicinin kuralıyla hesaplandı; 4.0 derlemesi belirsiz sözcükleri (ör. “tarihi”, “rekor”) ayırmadığı için " + (D.meta.rules.refHeadlines || 0).toLocaleString("tr") + " eski başlıktan " + (D.meta.rules.evidenceChanged || 0).toLocaleString("tr") + (function (x) { return x + (/[ıu]$/.test(x) ? "nda" : "nde"); })(sufNum(D.meta.rules.evidenceChanged || 0)) + " kanıt gücü değişti.</p>" +
-    "<p><b>Bölüm ve siyasi etiketler.</b> 4.0'ın etiketli " + (C.trainedOn || 0).toLocaleString("tr") + " başlığı üzerinde eğitilen TF-IDF + lojistik regresyon (kurum, adres yolu, başlık sözcükleri ve karakter n-gramları). " +
+    "<p><b>Puanlama.</b> Başlıklar ve spotlar, sitedeki çözümleyicinin <b>aynı</b> kural dosyasıyla puanlandı (shared/analysis/rules.cjs). Dosya, sağlanan referans derlemdeki " +
+    (D.meta.rules.refHeadlines || 0).toLocaleString("tr") + " kayıtlı puanın tamamını birebir üretir. Kanıt gücü (güçlü / orta / zayıf), belirsiz sözcükleri (ör. “tarihi”, “rekor”) ayıran çözümleyici kuralıyla hesaplanır.</p>" +
+    "<p><b>Bölüm ve siyasi etiketler.</b> Sağlanan referans derlemin etiketli " + (C.trainedOn || 0).toLocaleString("tr") + " başlığı üzerinde eğitilen TF-IDF + lojistik regresyon (kurum, adres yolu, başlık sözcükleri ve karakter n-gramları). " +
     P.cv_folds + " katlı çapraz doğrulama: bölüm doğruluğu <b>" + pc5((C.section || {}).accuracy) + "</b> (makro F1 " + dec((C.section || {}).macroF1, 2) + "; çok az örnekli bölümler düşürüyor), siyasi/siyasi değil <b>" +
-    pc5((C.political || {}).accuracy) + "</b>. Bu etiketler önceki bir sınıflandırıcının çıktısından öğrenildiği için bağımsız insan etiketi değildir; etiketli başlıklar kendi etiketlerini korur.</p>" +
-    "<p><b>Olaylar.</b> Kural 4.0 ile aynı (eşik " + dec(P.cluster_threshold, 2) + ", " + P.cluster_window_hours + " saat, %" + Math.round(100 * P.cluster_merge_link_share) + " bağ koşulu, en çok " + P.cluster_max_size +
-    " başlık, en az " + P.event_min_outlets + " kurum). Elle denetlenen " + c.eventsHand + " olay olduğu gibi korundu; " + c.eventsAuto.toLocaleString("tr") + " olay otomatik. 4.0 olaylarıyla çift düzeyinde uyum: kesinlik " +
-    dec(K.pair_precision, 3) + ", duyarlılık " + dec(K.pair_recall, 3) + ", F1 <b>" + dec(K.pair_f1, 3) + "</b> (4.0'ın kendi yeniden üretimi 0,848). Önceki sürümdeki bir olayın en az yarısını sürdüren olay onun kimliğini taşır; bağlantılar bu yüzden kırılmaz. " +
-    "Olay konuları, 4.0 olaylarının konularıyla eğitilen sınıflandırıcıyla atandı (mikro F1 " + dec(T.microF1, 3) + ").</p>" +
+    pc5((C.political || {}).accuracy) + "</b>. Referans etiketler de bir sınıflandırıcının çıktısı olduğu için bağımsız insan etiketi değildir; etiketli başlıklar kendi etiketlerini korur.</p>" +
+    "<p><b>Olaylar.</b> Başlıklar karakter ve kelime n-gramlarının kosinüs benzerliğiyle kümelenir (eşik " + dec(P.cluster_threshold, 2) + ", " + P.cluster_window_hours + " saat, %" + Math.round(100 * P.cluster_merge_link_share) + " bağ koşulu, en çok " + P.cluster_max_size +
+    " başlık, en az " + P.event_min_outlets + " kurum). Elle denetlenen " + c.eventsHand + " olay girdi olarak olduğu gibi korundu; " + c.eventsAuto.toLocaleString("tr") + " olay otomatik. Kural, elle denetlenmiş referans olaylarla çift düzeyinde doğrulandı: kesinlik " +
+    dec(K.pair_precision, 3) + ", duyarlılık " + dec(K.pair_recall, 3) + ", F1 <b>" + dec(K.pair_f1, 3) + "</b>. Veri güncellendiğinde, önceki derlemedeki bir olayın en az yarısını sürdüren olay onun kimliğini taşır; bağlantılar bu yüzden kırılmaz. " +
+    "Olay konuları, referans olayların konularıyla eğitilen sınıflandırıcıyla atandı (mikro F1 " + dec(T.microF1, 3) + ").</p>" +
     "<p><b>Hız.</b> Her olayda kurumun ilk başlığının saati; ilk yayınlayan kurum ve diğerlerinin ilk habere göre gecikmesi. Blok geçişi: bir bloğun açtığı olayı öbür bloktan en az bir kurumun vermesi.</p>" +
     "<p><b>Başlık–spot farkı.</b> Başlık puanı eksi aynı haberin spot puanı; ≥ 15 puan “başlık spotundan sert” sayıldı. Spotu olmayan ya da başlıkla aynı olan haberler dışarıda. Örnek listesi yalnızca bir olaya giren haberlerden seçilir.</p>" +
-    "<p><b>Benzerlik haritası.</b> Etkin ve en az " + P.similarity_min_events + " olaya giren kurumlar. İki bileşen: olay kapsamının phi korelasyonu (kurum büyüklüğüne duyarsız; örtüşme katsayısı en çok olay veren kurumu herkese en yakın gösteriyordu) ve en az 10 ortak olayda başlıkların ortalama karakter n-gram kosinüsü. İkisi 0–1 aralığına ölçeklenip ortalandı; konum klasik çok boyutlu ölçeklemeyle, ilişki testi 9.999 permütasyonlu Mantel testiyle.</p>" +
-    "<p><b>Konu modeli.</b> 40 konulu Dirichlet çok terimli karışım (GSDMM) siyasi başlıklara yeniden uygulandı; her konu, sözcükleri en çok örtüşen 4.0 konusunun temasını alır (4.0'da temalar sözcük listeleri okunarak elle atanmıştı).</p></section>";
+    "<p><b>Benzerlik haritası.</b> Etkin ve en az " + P.similarity_min_events + " olaya giren kurumlar. İki bileşen: olay kapsamının phi korelasyonu (kurum büyüklüğüne duyarsız; örtüşme katsayısı en çok olay veren kurumu herkese en yakın gösterir) ve en az 10 ortak olayda başlıkların ortalama karakter n-gram kosinüsü. İkisi 0–1 aralığına ölçeklenip ortalandı; konum klasik çok boyutlu ölçeklemeyle, ilişki testi 9.999 permütasyonlu Mantel testiyle.</p>" +
+    "<p><b>Konu modeli.</b> 40 konulu Dirichlet çok terimli karışım (GSDMM) siyasi başlıklara uygulandı; her konu, sözcükleri en çok örtüşen referans temanın adını alır. Temaların kelimeleri İleri analiz sayfasında, kontrol edilebilir.</p></section>";
 }
 
 /* ---------------------------------------------------------------- footer */
@@ -7574,10 +7580,6 @@ function v3After(path, tab, params) {
       var bar = document.querySelector(".admbar .wrap"); if (bar) bar.textContent = t3("deskBar");
       v3deskWire(); v3deskPanel();
     }
-  }
-  if (v3on("evidence") && path === "/bulgular" && tab === "temel") {
-    var finds = view.querySelectorAll(".find");
-    if (finds.length) { add(finds[finds.length - 1], "afterend", v3finding()); v3drawFinding(); }
   }
   v3decorateSplits(view);
 
