@@ -25,6 +25,10 @@ class AnalyzeTest(unittest.TestCase):
         self.assertEqual(g["outlets"]["X"], {"n": 1, "mean": 35.0, "hotter": 1.0, "cooler": 0.0})
         self.assertEqual(g["top"][0], {"i": "a", "g": 35, "l": "lede"})
 
+    def test_gap_examples_come_only_from_event_members(self):
+        g = headline_lede_gap([art("solo", "X", "2026-10-01T10:00", v=90, lv=0)], {"solo": "lede"})
+        self.assertEqual((g["outlets"]["X"]["n"], g["top"]), (1, []))  # counted, but not shown as an example
+
     def test_overlap_uses_the_smaller_set(self):
         self.assertEqual(overlap_matrix({"a": {1, 2}, "b": {1, 2, 3, 4}})["a"]["b"], 1.0)
 

@@ -31,6 +31,17 @@ class StoreTest(unittest.TestCase):
             self.assertEqual(ingest(store, src, "2026-09-01", "2026-09-30")["added"], 0)
             self.assertEqual(store.day_hash("2026-09-01"), h)  # byte-identical on re-run
 
+    def test_a_later_copy_fills_a_missing_lede_and_nothing_else(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            store = Store(Path(tmp, "store"))
+            row = '{"source":"ntv","url":"https://ntv.com.tr/x","title":"%s","published_at":"2026-09-01T10:00:00+03:00","summary":"%s"}'
+            for name, lines in (("a", [row % ("Harita", ""), row % ("Akış", "Spot.")]), ("b", [row % ("Sonra", "Başka spot.")])):
+                src = Path(tmp, name); src.mkdir()
+                Path(src, "articles.jsonl").write_text("\n".join(lines))
+                ingest(store, src)
+            [r] = store.read_day("2026-09-01")
+            self.assertEqual((r["title"], r["summary"]), ("Harita", "Spot."))  # first copy kept, its gap filled once
+
 
 if __name__ == "__main__":
     unittest.main()

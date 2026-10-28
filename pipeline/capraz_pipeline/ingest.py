@@ -54,6 +54,8 @@ def ingest(store: Store, root: Path, since: str | None = None, until: str | None
             rid = article_id(raw["url"])
             if rid in by_day[day]:
                 stats["duplicate"] += 1
+                kept = by_day[day][rid]  # first copy wins; a later one may only fill its missing lede
+                kept["summary"] = kept["summary"] or " ".join(str(raw.get("summary") or "").split())
                 continue
             by_day[day][rid] = {
                 "id": rid,

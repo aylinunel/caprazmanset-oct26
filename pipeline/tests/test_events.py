@@ -15,6 +15,11 @@ class EventsTest(unittest.TestCase):
         # Mirror case.
         self.assertEqual(blind_spot({"left": 5, "mid": 1, "right": 0}, active), "right")
 
+    def test_blind_spot_needs_the_binomial_test_too(self):
+        # The normalised shares alone would call this the left's blind spot, but with only 2 of 15
+        # active outlets covering it, four absent left outlets are what chance predicts.
+        self.assertIsNone(blind_spot({"left": 0, "mid": 0, "right": 2}, {"left": 4, "mid": 2, "right": 9}))
+
     def test_binom_cdf(self):
         self.assertAlmostEqual(binom_cdf(0, 5, 0.5), 1 / 32)
         self.assertAlmostEqual(binom_cdf(5, 5, 0.3), 1.0)

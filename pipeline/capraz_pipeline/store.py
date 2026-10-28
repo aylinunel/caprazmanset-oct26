@@ -84,14 +84,19 @@ class Store:
             yield from self.read_day(day)
 
     def merge_day(self, day: str, records: Iterable[dict]) -> tuple[int, int]:
-        """Add records to a day; existing ids win (first collection is kept). Returns (added, total)."""
+        """Add records to a day; existing ids win (first collection is kept), except that a stored record
+        without a lede takes the lede of a later copy. Returns (added, total)."""
         current = {r["id"]: r for r in self.read_day(day)}
-        added = 0
+        added = changed = 0
         for r in records:
-            if r["id"] not in current:
+            old = current.get(r["id"])
+            if old is None:
                 current[r["id"]] = r
                 added += 1
-        if added:
+            elif not old["summary"] and r["summary"]:
+                old["summary"] = r["summary"]
+                changed += 1
+        if added or changed:
             rows = sorted(current.values(), key=lambda r: (r["published_at"], r["id"]))
             tmp = self.path(day).with_suffix(".tmp")
             # mtime=0 keeps the file byte-identical for identical content (stable hashes).
