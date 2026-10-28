@@ -8,6 +8,10 @@ HTML rendering passes through a DOMPurify boundary. Former inline navigation han
 
 The full historical corpus remains client-indexed to preserve the original extensive views. Initial network/payload cost is explicitly retained. The server encodes the public dataset once per distinct content and answers revalidations with `304` (`server/editorial/public-body.ts`, ADR-0001); browsers must still revalidate on every load, so an editorial change is never served stale from their cache. There is no claim that page size, advanced computations, or all imperative legacy functions have been fully modernized. Precomputed research results remain supplied historical outputs and are not relabelled as fresh AI analysis.
 
+## Analysis pipeline and static export
+
+`pipeline/` is the reproducible analysis pipeline this document previously listed as missing ([ADR-0002](adr/0002-analysis-pipeline.md), [pipeline/README.md](../pipeline/README.md)). It ingests collector output into a day-partitioned store, scores headlines and ledes with `shared/analysis/rules.cjs` (the same file the public analyser runs), retrains section/political classifiers on `data/reference/`, clusters events with the documented rule while keeping the 140 hand-checked events locked, computes the public analyses and writes the static 5.0 site (`site/` sources + monthly data packs). The static export publishes these machine results, labelled and validated on its Yöntem page. They do not enter `editorial_records`; any later import into `/yonetim` is draft-only, like every other import.
+
 ## Persistent editorial model
 
 `editorial_records` is the source of truth for article, event, source, bias-definition and analysis records. Each stores explicit status, verification state, provenance, method, public disclosure, evidence URL, source reference, version and compact compatibility payload. Core records are not duplicated in an editable browser dataset. `dataset_manifests` retains immutable supporting reference arrays and the historical import hash. Its core arrays are assembled from published database records at request time.

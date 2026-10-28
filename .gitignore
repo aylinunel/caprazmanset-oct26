@@ -122,3 +122,5 @@ scraper/upstream/*_status.json
 *.token
 .env.*
 !.env.example
+pipeline/.data/
+__pycache__/
