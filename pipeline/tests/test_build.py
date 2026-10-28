@@ -73,6 +73,10 @@ class BuildTest(unittest.TestCase):
             self.assertNotIn("@@RULES@@", html)
             self.assertTrue((tmp / "site" / "data" / "core.bin").exists())
             self.assertFalse((tmp / "site" / "data" / "events-members.json").exists())
+            frag = assemble(out, tmp / "frag", fragment=True).read_text()
+            self.assertNotIn("<html", frag)
+            txt = (tmp / "frag" / "data" / "core.bin.txt").read_bytes()
+            self.assertTrue(txt.startswith(b"H4sI"))                    # what loader.js checks for
 
 
 if __name__ == "__main__":

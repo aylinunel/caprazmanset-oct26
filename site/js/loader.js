@@ -13,16 +13,27 @@
       title + '</h1><p class="lede" id="cm-load">' + detail + "</p></section>";
   }
 
-  // Files are gzip; the host may or may not have decoded them already, so check the magic bytes.
+  // Packs are gzip JSON. Hosts that serve only text get them base64-encoded (".txt", see
+  // pipeline/capraz_pipeline/site.py); a host may also have decoded the gzip already. Check the bytes.
+  var SUFFIX = window.CM_PACK_SUFFIX || "";
+  function gunzip(bytes) {
+    return new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
+  }
+  function unbase64(text) {
+    var bin = atob(text), out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
   function load(name) {
-    return fetch(BASE + name).then(function (r) {
+    return fetch(BASE + name + SUFFIX).then(function (r) {
       if (!r.ok) throw new Error(name + " " + r.status);
       return r.arrayBuffer();
     }).then(function (buf) {
-      var u = new Uint8Array(buf, 0, 2);
-      if (u[0] === 0x1f && u[1] === 0x8b)
-        return new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
-      return new TextDecoder().decode(buf);
+      var u = new Uint8Array(buf);
+      if (u[0] === 0x1f && u[1] === 0x8b) return gunzip(u);
+      if (u[0] === 0x48 && u[1] === 0x34 && u[2] === 0x73 && u[3] === 0x49) // "H4sI": base64 of a gzip header
+        return gunzip(unbase64(new TextDecoder().decode(u)));
+      return new TextDecoder().decode(u);
     }).then(JSON.parse);
   }
 

@@ -5,6 +5,7 @@ build (older dates, a live run) only replaces the data folder.
 """
 from __future__ import annotations
 
+import base64
 import shutil
 from pathlib import Path
 
@@ -27,6 +28,7 @@ def assemble(data_dir: Path, dest: Path, title: str = "Çapraz Manşet 5.0", fra
         "<style>", (SITE / "styles.css").read_text(encoding="utf-8"), "</style>", "</head>", "<body>",
         '<div id="app"></div>', '<div class="tip" id="tip"></div>',
         '<script type="application/json" id="cm-logo">' + (SITE / "logo.json").read_text(encoding="utf-8").strip() + "</script>",
+        ('<script>window.CM_PACK_SUFFIX = ".txt";</script>' if fragment else ""),
         "<script>" + code((SITE / "js" / "loader.js").read_text(encoding="utf-8")) + "</script>",
         '<script type="text/x-cm">' + code((SITE / "js" / "turkish-layer.js").read_text(encoding="utf-8")) + "</script>",
         '<script type="text/x-cm">' + code(app) + "</script>",
@@ -36,7 +38,11 @@ def assemble(data_dir: Path, dest: Path, title: str = "Çapraz Manşet 5.0", fra
             html = html.replace(tag + "\n", "", 1)
     dest.mkdir(parents=True, exist_ok=True)
     (dest / "index.html").write_text(html, encoding="utf-8")
-    if data_dir.resolve() != (dest / "data").resolve():
-        shutil.copytree(data_dir, dest / "data", dirs_exist_ok=True,
-                        ignore=shutil.ignore_patterns("events-members.json", "report.json"))
+    (dest / "data").mkdir(exist_ok=True)
+    for f in sorted(data_dir.glob("*.bin")):
+        if fragment:
+            # shortcut: claude.ai artifacts serve no binary files, so packs go as base64 text (+33 %).
+            (dest / "data" / (f.name + ".txt")).write_bytes(base64.b64encode(f.read_bytes()))
+        elif f.resolve() != (dest / "data" / f.name).resolve():
+            shutil.copy2(f, dest / "data" / f.name)
     return dest / "index.html"
