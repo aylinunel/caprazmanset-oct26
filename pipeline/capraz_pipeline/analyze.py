@@ -15,14 +15,11 @@ from scipy.cluster.hierarchy import leaves_list, linkage
 from scipy.spatial.distance import squareform
 from scipy.stats import spearmanr
 
+from .cluster import minutes
 from .config import PARAMS
 from .events import bloc
 
 PERMS = 9999
-
-
-def minutes(stamp: str) -> int:
-    return int(datetime.fromisoformat(stamp).timestamp() // 60)
 
 
 # ------------------------------------------------------------------ basics
@@ -142,13 +139,6 @@ def headline_lede_gap(arts: list[dict], ledes: dict[str, str], top: int = 40) ->
             "n": sum(len(g) for g in by.values())}
 
 
-def overlap_matrix(sets: dict[str, set]) -> dict[str, dict[str, float]]:
-    """Overlap coefficient: shared / size of the smaller set (Jaccard would favour big archives)."""
-    keys = list(sets)
-    return {a: {b: round(len(sets[a] & sets[b]) / min(len(sets[a]), len(sets[b])), 3) if min(len(sets[a]), len(sets[b])) else 0.0
-                for b in keys} for a in keys}
-
-
 def mantel(d1: np.ndarray, d2: np.ndarray, seed: int = PARAMS.random_state) -> tuple[float, float]:
     """Pearson r between two distance matrices, two-sided permutation p."""
     iu = np.triu_indices(len(d1), 1)
@@ -191,7 +181,8 @@ def _unit(m: np.ndarray) -> np.ndarray:
 
 def similarity_map(event_sets: dict[str, set], words: dict[str, dict[str, float]], lean: dict, n_events: int) -> dict | None:
     """Coverage (phi) + headline-wording similarity -> 2-D classical MDS coordinates + neighbours."""
-    keys = [s for s in event_sets if len(event_sets[s]) >= PARAMS.similarity_min_events]
+    # Sorted: callers pass sets, and the permutation test's p depends on row order.
+    keys = sorted(s for s in event_sets if len(event_sets[s]) >= PARAMS.similarity_min_events)
     if len(keys) < MIN_OUTLETS:
         return None
     ov = phi_matrix({s: event_sets[s] for s in keys}, n_events)
@@ -244,16 +235,18 @@ def advanced_outlets(om: dict, min_events: int = 150, min_political: int = 1000)
 MIN_OUTLETS = 4  # below this, correlations across outlets are not reported
 
 
-def agenda(event_sets: dict[str, set], lean: dict, outlets: list[str]) -> dict | None:
+def agenda(event_sets: dict[str, set], lean: dict, outlets: list[str], n_events: int) -> dict | None:
+    """Agenda similarity as the phi correlation of event coverage (same measure as the similarity map:
+    the overlap coefficient puts the outlet with the most events close to everyone)."""
     keys = [s for s in outlets if lean.get(s) is not None]
     if len(keys) < MIN_OUTLETS:
         return None
-    ov = overlap_matrix({s: event_sets.get(s, set()) for s in keys})
-    D = np.array([[1 - ov[a][b] for b in keys] for a in keys])
+    phi = phi_matrix({s: event_sets.get(s, set()) for s in keys}, n_events)
+    D = np.array([[1 - phi[a][b] for b in keys] for a in keys])
     np.fill_diagonal(D, 0)
     order = [keys[i] for i in leaves_list(linkage(squareform(D, checks=False), "average"))]
     r, p = mantel(D, np.abs(np.subtract.outer([lean[k] for k in keys], [lean[k] for k in keys])))
-    return {"order": order, "ov": ov, "size": {s: len(event_sets.get(s, ())) for s in keys}, "mantel_r": r, "mantel_p": p}
+    return {"order": order, "phi": phi, "size": {s: len(event_sets.get(s, ())) for s in keys}, "mantel_r": r, "mantel_p": p}
 
 
 def framing_pca(arts: list[dict], lean: dict, outlets: list[str]) -> dict | None:

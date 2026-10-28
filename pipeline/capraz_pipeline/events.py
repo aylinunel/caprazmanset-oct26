@@ -44,6 +44,7 @@ def blind_spot(cover: dict, active: dict, P=PARAMS):
     for side, other in (("left", "right"), ("right", "left")):
         k, n = cover.get(side, 0), active.get(side, 0)
         if (n and k < P.bs_max_side_outlets and share[other] >= P.bs_min_other_share
+                # Ground News' published condition (Yöntem §5): side share <= (other share - 33) x 30/37.
                 and share[side] <= (share[other] - P.bs_min_other_share) * 30 / 37
                 and binom_cdf(k, n, p_all) < P.bs_binom_p):
             return side

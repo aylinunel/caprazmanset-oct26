@@ -159,7 +159,7 @@ def build(root: Path, ref: Path, out: Path, since: str | None = None, until: str
                                    days[0], days[-1], coh)
     V5 = {"leadLag": an.lead_lag(by_i, E, lean), "gap": an.headline_lede_gap(arts, ledes),
           "similarity": an.similarity_map({s: event_sets[s] for s in act_set}, an.wording_similarity(by_i, E, vec), lean, len(E))}
-    ADV = {"agenda": an.agenda(event_sets, lean, adv_out), "pca": an.framing_pca(arts, lean, adv_out),
+    ADV = {"agenda": an.agenda(event_sets, lean, adv_out, len(E)), "pca": an.framing_pca(arts, lean, adv_out),
            "topics": topic_block}
 
     # write

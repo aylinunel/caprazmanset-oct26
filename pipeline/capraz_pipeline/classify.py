@@ -81,15 +81,15 @@ def cross_validate(docs, y, folds: int) -> dict:
 
 
 def train(store: Store, ref: Path, models: Path, validate: bool = True) -> dict:
-    labels = load_labels(ref)
-    rows = [r for r in store.iter() if r["id"] in labels]
-    docs = [doc(r) for r in rows]
     key = hashlib.sha256((ref / "labels.jsonl.gz").read_bytes()).hexdigest()[:12] + CODE_KEY
     models.mkdir(parents=True, exist_ok=True)
     target = models / f"classify-{key}.pkl"
     report_path = models / f"classify-{key}.json"
     if target.exists() and report_path.exists():
         return json.loads(report_path.read_text())
+    labels = load_labels(ref)
+    rows = [r for r in store.iter() if r["id"] in labels]
+    docs = [doc(r) for r in rows]
     sec_y = [labels[r["id"]]["c"] for r in rows]
     pol_y = [str(labels[r["id"]]["p"]) for r in rows]
     report = {"key": key, "trainedOn": len(rows)}

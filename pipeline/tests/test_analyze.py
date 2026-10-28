@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from capraz_pipeline.analyze import headline_lede_gap, jsd, lead_lag, mantel, overlap_matrix, phi_matrix
+from capraz_pipeline.analyze import agenda, similarity_map, headline_lede_gap, jsd, lead_lag, mantel, phi_matrix
 
 
 def art(i, s, d, v=5, lv=None, p=1):
@@ -29,16 +29,27 @@ class AnalyzeTest(unittest.TestCase):
         g = headline_lede_gap([art("solo", "X", "2026-10-01T10:00", v=90, lv=0)], {"solo": "lede"})
         self.assertEqual((g["outlets"]["X"]["n"], g["top"]), (1, []))  # counted, but not shown as an example
 
-    def test_overlap_uses_the_smaller_set(self):
-        self.assertEqual(overlap_matrix({"a": {1, 2}, "b": {1, 2, 3, 4}})["a"]["b"], 1.0)
+    def test_agenda_uses_phi_so_the_biggest_outlet_is_not_close_to_everyone(self):
+        sets = {"big": set(range(10)), "l1": {0, 1, 2}, "l2": {0, 1, 2}, "r1": {7, 8, 9}, "r2": {7, 8, 9}}
+        a = agenda(sets, {"big": 50, "l1": 10, "l2": 15, "r1": 85, "r2": 90}, list(sets), 10)
+        self.assertEqual(a["phi"]["big"]["l1"], 0.0)       # covers every event: says nothing about l1
+        self.assertEqual(a["phi"]["l1"]["l2"], 1.0)
+        self.assertLess(a["phi"]["l1"]["r1"], 0)
 
     def test_phi_does_not_favour_the_biggest_outlet(self):
         events = set(range(100))
         big = set(range(90))                       # covers almost everything
         a, b = set(range(0, 20)), set(range(0, 18)) | {95}   # two small outlets with the same agenda
         phi = phi_matrix({"big": big, "a": a, "b": b}, len(events))
-        self.assertGreater(phi["a"]["b"], phi["a"]["big"])
-        self.assertEqual(overlap_matrix({"big": big, "a": a})["a"]["big"], 1.0)  # overlap would pick "big"
+        self.assertGreater(phi["a"]["b"], phi["a"]["big"])  # the overlap coefficient would rate a–big 1.0
+
+    def test_similarity_map_does_not_depend_on_input_order(self):
+        rng = np.random.default_rng(1)  # weak, noisy structure: p is not pinned at its floor
+        sets = {s: set(rng.choice(200, 60, replace=False).tolist()) for s in "abcdefghij"}
+        lean = {s: float(rng.integers(0, 100)) for s in sets}
+        one = similarity_map(sets, {}, lean, 200)
+        two = similarity_map(dict(reversed(list(sets.items()))), {}, lean, 200)  # sets arrive in set order
+        self.assertEqual((one["mantel_r"], one["mantel_p"]), (two["mantel_r"], two["mantel_p"]))
 
     def test_mantel_detects_identical_structure(self):
         x = np.array([1.0, 3, 7, 12, 20, 33])
