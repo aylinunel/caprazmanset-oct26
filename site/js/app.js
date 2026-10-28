@@ -5757,12 +5757,13 @@ function methodPaper() {
     "haritası yayımlanmaması). Veri alınan kurumların " + totAct + " tanesi dönemin en az " + WIN.half + " gününü kapsamaktadır (" + act.left + " sol, " +
     act.mid + " merkez, " + act.right + " sağ); bu kurumlar “etkin” kabul edilmiş ve kurumlar arası karşılaştırmalar bunlarla sınırlandırılmıştır. " +
     "Kapsamanın sağa doğru çarpık olması (Tablo 1) bütün bulguların okunmasında hesaba katılmalıdır.</p>" +
-    '<div class="scroller panel"><table><thead><tr><th>Kurum</th><th class="r">Yerleşim</th><th class="r">Başlık</th><th class="r">Gün (' + WIN.days + ')</th></tr></thead><tbody>' +
+    '<div class="scroller panel"><table><thead><tr><th>Kurum</th><th class="r">Yerleşim</th><th class="r">Başlık</th><th class="r">Gün (' + WIN.days + ')</th><th class="r">İlk gün</th></tr></thead><tbody>' +
     (D.FD || []).slice().sort(function (a, b) { return (b.n || 0) - (a.n || 0); }).map(function (f) {
       var pf = SRC[f.s];
       return '<tr><td><span class="xpm-s" style="--c:' + lean(pf ? pf.lean : null) + '">' + esc(pf ? pf.n : f.s) + "</span></td>" +
-        '<td class="r num">' + (pf && pf.lean != null ? pf.lean : "—") + '</td><td class="r num">' + fmt(f.n || 0) + '</td><td class="r num">' + (f.w || 0) + "</td></tr>";
-    }).join("") + '</tbody></table></div><p class="xsmall" style="margin-top:8px">Tablo 1. Kurum başına derlenen başlık ve kapsanan gün sayısı.</p>';
+        '<td class="r num">' + (pf && pf.lean != null ? pf.lean : "—") + '</td><td class="r num">' + fmt(f.n || 0) + '</td><td class="r num">' + (f.w || 0) + '</td><td class="r num">' + (f.f ? fmtD(f.f + "T00:00") : "—") + "</td></tr>";
+    }).join("") + '</tbody></table></div><p class="xsmall" style="margin-top:8px">Tablo 1. Kurum başına derlenen başlık, kapsanan gün sayısı ve ilk başlığın günü. ' +
+    "Toplamaya sonradan katılan kurumlar (ör. yalnızca akışla toplananlar) dönemin yarısını kapsayana kadar etkin sayılmaz; kurumlar arası karşılaştırmalara bu yüzden girmez.</p>";
 
   h += sec(3, "Olay tespiti") +
     "<p>Başlıklar, sözcük (1–2 gram) ve karakter (3–5 gram) TF-IDF vektörleriyle temsil edilmiştir (Salton ve Buckley, 1988). " +
@@ -6530,7 +6531,7 @@ function footer2() {
     '</span> olay · <span class="num">' + D.meta.sources.length + "</span> kurum<br>" + WIN.range + "</p>" +
     "<p>Yerleşim ve sahiplik: sağlanan kayıt defteri, doğrulanmamış. Site doğruluk denetimi yapmaz; çerçevelemeyi ölçer.</p>" +
     fixLink("genel", "site", "") + "</div></div>" +
-    '<div class="xfoot-b"><span class="mono">5.0 · statik anlık görüntü · ' + esc(D.meta.built || "") + '</span><a class="footlink-adm" href="#/yonetim">Yönetim →</a></div></div></footer>';
+    '<div class="xfoot-b"><span class="mono">' + esc(D.meta.version || "") + ' · statik anlık görüntü · ' + esc(D.meta.built || "") + '</span><a class="footlink-adm" href="#/yonetim">Yönetim →</a></div></div></footer>';
 }
 
 function v2cAfter(path, tab, params) {

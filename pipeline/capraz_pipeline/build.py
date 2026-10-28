@@ -177,7 +177,7 @@ def build(root: Path, ref: Path, out: Path, since: str | None = None, until: str
     start = datetime.fromisoformat(days[0]).replace(tzinfo=timezone.utc)
     end = datetime.fromisoformat(days[-1]).replace(tzinfo=timezone.utc)
     meta = {
-        "built": date.today().isoformat(), "version": "5.0",
+        "built": date.today().isoformat(), "version": "6.0",
         "window": {"start": start.isoformat().replace("+00:00", ".000Z"),
                    "end": (end.replace(hour=23, minute=59)).isoformat().replace("+00:00", ".000Z")},
         "method": "Yayıncı site haritaları ve akışları (robots.txt'ye uyularak), her makalenin başlığı, "

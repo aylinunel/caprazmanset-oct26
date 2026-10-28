@@ -38,16 +38,14 @@ def per_day(arts: list[dict]) -> dict[str, int]:
 
 
 def feed_table(fd_ref: list[dict], arts: list[dict]) -> list[dict]:
-    n, days, last = Counter(), defaultdict(set), {}
+    n, days = Counter(), defaultdict(set)
     for a in arts:
-        n[a["s"]] += 1; days[a["s"]].add(a["d"][:10]); last[a["s"]] = max(last.get(a["s"], ""), a["d"][:10])
-    out = []
-    for f in fd_ref:
-        s = f["s"]
-        out.append({**f, "ok": bool(n[s]), "n": n[s], "w": len(days[s]), "l": last.get(s)})
+        n[a["s"]] += 1; days[a["s"]].add(a["d"][:10])
+    span = lambda s: {"ok": bool(n[s]), "n": n[s], "w": len(days[s]),
+                      "f": min(days[s]) if days[s] else None, "l": max(days[s]) if days[s] else None}
+    out = [{**f, **span(f["s"])} for f in fd_ref]
     known = {f["s"] for f in fd_ref}
-    out += [{"s": s, "u": None, "c": "sitemap", "e": None, "ok": True, "n": n[s], "w": len(days[s]), "l": last[s]}
-            for s in sorted(set(n) - known)]
+    out += [{"s": s, "u": None, "c": "sitemap", "e": None, **span(s)} for s in sorted(set(n) - known)]
     return out
 
 

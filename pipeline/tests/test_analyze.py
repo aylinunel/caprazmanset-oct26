@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from capraz_pipeline.analyze import agenda, similarity_map, headline_lede_gap, jsd, lead_lag, mantel, phi_matrix
+from capraz_pipeline.analyze import agenda, feed_table, similarity_map, headline_lede_gap, jsd, lead_lag, mantel, phi_matrix
 
 
 def art(i, s, d, v=5, lv=None, p=1):
@@ -50,6 +50,14 @@ class AnalyzeTest(unittest.TestCase):
         one = similarity_map(sets, {}, lean, 200)
         two = similarity_map(dict(reversed(list(sets.items()))), {}, lean, 200)  # sets arrive in set order
         self.assertEqual((one["mantel_r"], one["mantel_p"]), (two["mantel_r"], two["mantel_p"]))
+
+    def test_feed_table_records_each_outlets_first_and_last_day(self):
+        rows = feed_table([{"s": "a"}, {"s": "gone"}], [art("1", "a", "2026-09-03T10:00"), art("2", "a", "2026-10-01T09:00"),
+                                                         art("3", "new", "2026-10-27T08:00")])
+        by = {r["s"]: r for r in rows}
+        self.assertEqual((by["a"]["f"], by["a"]["l"], by["a"]["w"]), ("2026-09-03", "2026-10-01", 2))
+        self.assertEqual((by["gone"]["ok"], by["gone"]["f"]), (False, None))
+        self.assertEqual(by["new"]["f"], "2026-10-27")   # an outlet not in the registry still appears
 
     def test_mantel_detects_identical_structure(self):
         x = np.array([1.0, 3, 7, 12, 20, 33])

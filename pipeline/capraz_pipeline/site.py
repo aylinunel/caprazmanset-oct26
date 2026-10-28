@@ -14,7 +14,7 @@ from .config import REPO, SCORER
 SITE = REPO / "site"
 
 
-def assemble(data_dir: Path, dest: Path, title: str = "Çapraz Manşet 5.0", fragment: bool = False) -> Path:
+def assemble(data_dir: Path, dest: Path, title: str = "Çapraz Manşet 6.0", fragment: bool = False) -> Path:
     """fragment=True: no doctype/html/head/body wrapper (claude.ai artifacts add their own)."""
     rules = SCORER.read_text(encoding="utf-8")
     app = (SITE / "js" / "app.js").read_text(encoding="utf-8")
